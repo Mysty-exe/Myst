@@ -5,17 +5,27 @@
 
 using namespace std;
 
-void rewriteScreen(vector<string> lines, int x, int y, bool highlight = false)
+void writeLineNums(int height, vector<string> lines, int x, int y)
+{
+    for (int n = 0; n < height; n++)
+    {
+        move(n, 0);
+        printw("~");
+    }
+    refresh();
+}
+
+void rewriteScreen(WINDOW *win, vector<string> lines, int x, int y, bool highlight = false)
 {
     int tempX, tempY;
     tempX = tempY = 0;
 
-    clear();
+    wclear(win);
     move(tempY, tempX);
 
     for (const string &line : lines)
     {
-        mvprintw(tempY, tempX, line.c_str());
+        mvwprintw(win, tempY, tempX, line.c_str());
         tempY++;
     }
 
@@ -24,57 +34,60 @@ void rewriteScreen(vector<string> lines, int x, int y, bool highlight = false)
 
 main(int argc, char **argv)
 {
-    int width, height = 0;
+    int width, height;
     int cursorX, cursorY = 0;
+    width = height = 0;
+    cursorX = cursorY = 0;
     vector<string> lines = {""};
 
     initscr();
     noecho();
     raw();
-    keypad(stdscr, true);
     getmaxyx(stdscr, height, width);
 
+    WINDOW *textWindow = newwin(height, width, 0, 3);
+    keypad(textWindow, true);
+
+    writeLineNums(height, lines, cursorX, cursorY);
+
     int c;
-    while ((c = getch()) != 27)
+    while ((c = wgetch(textWindow)) != 27)
     {
         if (c >= 32 && c <= 126)
         {
             if (cursorX == lines.at(cursorY).length())
             {
-                addch(char(c));
+                waddch(textWindow, char(c));
                 lines.at(cursorY) = lines.at(cursorY) + char(c);
             }
             else
             {
-                insch(char(c));
-                move(cursorY, cursorX + 1);
+                winsch(textWindow, char(c));
+                wmove(textWindow, cursorY, cursorX + 1);
                 lines.at(cursorY) = lines.at(cursorY).substr(0, cursorX) + char(c) + lines.at(cursorY).substr(cursorX, lines.at(cursorY).length());
             }
         }
 
         switch (c)
         {
-        case 1:
-            rewriteScreen(lines, cursorX, cursorY, true);
-            break;
         case 8:
             if (cursorX > 0)
             {
                 lines.at(cursorY) = lines.at(cursorY).erase(cursorX - 1, 1);
-                move(cursorY, cursorX - 1);
-                delch();
+                wmove(textWindow, cursorY, cursorX - 1);
+                wdelch(textWindow);
             }
             if (cursorY > 0)
             {
                 if (cursorX == 0)
                 {
                     int x = lines.at(cursorY - 1).length();
-                    deleteln();
-                    move(cursorY - 1, x);
+                    wdeleteln(textWindow);
+                    wmove(textWindow, cursorY - 1, x);
                     lines.at(cursorY - 1) = lines.at(cursorY - 1) + lines.at(cursorY);
-                    printw(lines.at(cursorY).c_str());
+                    wprintw(textWindow, lines.at(cursorY).c_str());
                     lines.erase(lines.begin() + cursorY);
-                    move(cursorY - 1, x);
+                    wmove(textWindow, cursorY - 1, x);
                 }
             }
             break;
@@ -82,26 +95,26 @@ main(int argc, char **argv)
             if (cursorX == 0)
             {
                 lines.insert(lines.begin() + cursorY, "");
-                insertln();
-                move(cursorY + 1, 0);
+                winsertln(textWindow);
+                wmove(textWindow, cursorY + 1, 0);
             }
             else if (cursorX == lines.at(cursorY).length() - 1)
             {
-                move(cursorY + 1, 0);
+                wmove(textWindow, cursorY + 1, 0);
                 lines.insert(lines.begin() + cursorY + 1, "");
-                insertln();
+                winsertln(textWindow);
+                move(cursorY + 1, 0);
             }
             else
             {
                 string text = lines.at(cursorY).substr(cursorX, lines.at(cursorY).length() - 1);
-                clrtoeol();
-                move(cursorY + 1, 0);
+                wclrtoeol(textWindow);
+                wmove(textWindow, cursorY + 1, 0);
                 lines.at(cursorY) = lines.at(cursorY).substr(0, cursorX);
                 lines.insert(lines.begin() + cursorY + 1, text);
-                insertln();
-                printw(text.c_str());
-                move(cursorY + 1, 0);
-                refresh();
+                winsertln(textWindow);
+                wprintw(textWindow, text.c_str());
+                wmove(textWindow, cursorY + 1, 0);
             }
 
             break;
@@ -110,11 +123,11 @@ main(int argc, char **argv)
             {
                 if (cursorX > lines.at(cursorY - 1).length())
                 {
-                    move(cursorY - 1, lines.at(cursorY - 1).length());
+                    wmove(textWindow, cursorY - 1, lines.at(cursorY - 1).length());
                 }
                 else
                 {
-                    move(cursorY - 1, cursorX);
+                    wmove(textWindow, cursorY - 1, cursorX);
                 }
             }
             break;
@@ -123,28 +136,28 @@ main(int argc, char **argv)
             {
                 if (cursorX > lines.at(cursorY + 1).length())
                 {
-                    move(cursorY + 1, lines.at(cursorY + 1).length());
+                    wmove(textWindow, cursorY + 1, lines.at(cursorY + 1).length());
                 }
                 else
                 {
-                    move(cursorY + 1, cursorX);
+                    wmove(textWindow, cursorY + 1, cursorX);
                 }
             }
 
             break;
         case KEY_LEFT:
-            move(cursorY, cursorX - 1);
+            wmove(textWindow, cursorY, cursorX - 1);
             break;
         case KEY_RIGHT:
             if (cursorX < lines.at(cursorY).length())
             {
-                move(cursorY, cursorX + 1);
+                wmove(textWindow, cursorY, cursorX + 1);
             }
             break;
         }
 
-        getmaxyx(stdscr, height, width);
-        getyx(stdscr, cursorY, cursorX);
+        getmaxyx(textWindow, height, width);
+        getyx(textWindow, cursorY, cursorX);
     }
     endwin();
 
