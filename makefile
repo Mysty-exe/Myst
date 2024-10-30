@@ -1,3 +1,3 @@
 all:
-	g++ main.cpp -o app.exe -lncurses -DNCURSES_STATIC
-	app
+	g++ main.cpp -o myst.exe -lncurses -DNCURSES_STATIC
+	myst
