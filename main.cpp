@@ -1,70 +1,146 @@
 #include <ncurses/ncurses.h>
 #include <iostream>
+#include <stdio.h>
+#include <math.h>
 #include <vector>
 #include <string>
 
 using namespace std;
 
-void writeLineNums(int height, vector<string> lines, int x, int y)
+void rewriteScreen(WINDOW *textWin, WINDOW *lineWin, vector<string> lines, int x, int y, int max, int height)
 {
-    for (int n = 0; n < height; n++)
-    {
-        move(n, 0);
-        printw("~");
-    }
-    refresh();
-}
-
-void rewriteScreen(WINDOW *win, vector<string> lines, int x, int y, bool highlight = false)
-{
+    int lineNum = 0;
+    int lineY = 0;
     int tempX, tempY;
     tempX = tempY = 0;
 
-    wclear(win);
-    move(tempY, tempX);
+    werase(textWin);
+    werase(lineWin);
+    wmove(textWin, tempY, tempX);
+    wmove(lineWin, 0, 0);
 
-    for (const string &line : lines)
+    for (const string line : lines)
     {
-        mvwprintw(win, tempY, tempX, line.c_str());
-        tempY++;
+        lineNum++;
+        wmove(lineWin, tempY, 0);
+        mvwprintw(lineWin, lineY, 0, to_string(lineNum).c_str());
+
+        string copy = line;
+        while (true)
+        {
+            lineY++;
+            if (copy.length() <= max - 1)
+            {
+                mvwprintw(textWin, tempY, tempX, copy.c_str());
+                tempY++;
+                break;
+            }
+            else
+            {
+                mvwprintw(textWin, tempY, tempX, copy.substr(0, max - 1).c_str());
+                copy.erase(0, max - 1);
+                tempY++;
+            }
+        }
+    }
+    for (int n = tempY; n < height; n++)
+    {
+        mvwprintw(lineWin, n, 0, "~");
     }
 
-    move(y, x);
+    wmove(textWin, y, x);
+    wrefresh(lineWin);
+    wrefresh(textWin);
+}
+
+int getCurrentX(int x, int max)
+{
+    while (true)
+    {
+        if (x >= max)
+        {
+            x -= max;
+        }
+        else
+        {
+            break;
+        }
+    }
+    return x;
+}
+
+int getIncrement(int x, int max)
+{
+    int counter = 1;
+    while (true)
+    {
+        if (x >= max)
+        {
+            x -= max;
+            counter += 1;
+        }
+        else
+        {
+            break;
+        }
+    }
+    return counter;
 }
 
 main(int argc, char **argv)
 {
-    int width, height;
+    int width, height, currentX, currentLine;
     int cursorX, cursorY = 0;
     width = height = 0;
     cursorX = cursorY = 0;
+    currentX = currentLine = 0;
+
     vector<string> lines = {""};
 
     initscr();
+
+    getmaxyx(stdscr, height, width);
     noecho();
     raw();
-    getmaxyx(stdscr, height, width);
 
+    WINDOW *linesWindow = newwin(height, 3, 0, 0);
     WINDOW *textWindow = newwin(height, width, 0, 3);
     keypad(textWindow, true);
 
-    writeLineNums(height, lines, cursorX, cursorY);
+    rewriteScreen(textWindow, linesWindow, lines, 0, 0, width, height);
 
     int c;
     while ((c = wgetch(textWindow)) != 27)
     {
         if (c >= 32 && c <= 126)
         {
-            if (cursorX == lines.at(cursorY).length())
+            if (currentX == lines.at(currentLine).length())
             {
-                waddch(textWindow, char(c));
-                lines.at(cursorY) = lines.at(cursorY) + char(c);
+                lines.at(currentLine) = lines.at(currentLine) + char(c);
+                if (cursorX < width - 1)
+                {
+                    cursorX++;
+                }
+                else
+                {
+                    cursorX = 1;
+                    cursorY++;
+                }
+                currentX++;
             }
             else
             {
-                winsch(textWindow, char(c));
-                wmove(textWindow, cursorY, cursorX + 1);
-                lines.at(cursorY) = lines.at(cursorY).substr(0, cursorX) + char(c) + lines.at(cursorY).substr(cursorX, lines.at(cursorY).length());
+                lines.at(currentLine) = lines.at(currentLine).substr(0, currentX) + char(c) + lines.at(currentLine).substr(currentX, lines.at(currentLine).length());
+                currentX++;
+                if (cursorX < width - 1)
+                {
+                    cursorX++;
+                }
+                else
+                {
+                    cursorX = 1;
+                    cursorY++;
+                }
             }
         }
 
@@ -73,91 +149,131 @@ main(int argc, char **argv)
         case 8:
             if (cursorX > 0)
             {
-                lines.at(cursorY) = lines.at(cursorY).erase(cursorX - 1, 1);
-                wmove(textWindow, cursorY, cursorX - 1);
-                wdelch(textWindow);
+                lines.at(currentLine) = lines.at(currentLine).erase(currentX - 1, 1);
+                cursorX--;
+                currentX--;
             }
-            if (cursorY > 0)
+            else if (cursorY > 0)
             {
                 if (cursorX == 0)
                 {
-                    int x = lines.at(cursorY - 1).length();
-                    wdeleteln(textWindow);
-                    wmove(textWindow, cursorY - 1, x);
-                    lines.at(cursorY - 1) = lines.at(cursorY - 1) + lines.at(cursorY);
-                    wprintw(textWindow, lines.at(cursorY).c_str());
-                    lines.erase(lines.begin() + cursorY);
-                    wmove(textWindow, cursorY - 1, x);
+                    if (currentX == 0)
+                    {
+                        int x = getCurrentX(lines.at(currentLine - 1).length(), width - 1);
+                        currentX = lines.at(currentLine - 1).length();
+                        lines.at(currentLine - 1) = lines.at(currentLine - 1) + lines.at(currentLine);
+                        lines.erase(lines.begin() + currentLine);
+                        currentLine--;
+                        cursorX = x;
+                        cursorY--;
+                    }
+                    else
+                    {
+                        lines.at(currentLine) = lines.at(currentLine).erase(currentX - 1, 1);
+                        currentX--;
+                        cursorY--;
+                        cursorX = width - 2;
+                    }
                 }
             }
+
             break;
         case 10:
-            if (cursorX == 0)
+            if (currentX == 0)
             {
-                lines.insert(lines.begin() + cursorY, "");
-                winsertln(textWindow);
-                wmove(textWindow, cursorY + 1, 0);
+                lines.insert(lines.begin() + currentLine, "");
+                currentLine++;
+                currentX = 0;
             }
-            else if (cursorX == lines.at(cursorY).length() - 1)
+            else if (currentX == lines.at(currentLine).length())
             {
-                wmove(textWindow, cursorY + 1, 0);
-                lines.insert(lines.begin() + cursorY + 1, "");
-                winsertln(textWindow);
-                move(cursorY + 1, 0);
+                lines.insert(lines.begin() + currentLine + 1, "");
+                currentLine++;
+                currentX = 0;
             }
             else
             {
-                string text = lines.at(cursorY).substr(cursorX, lines.at(cursorY).length() - 1);
-                wclrtoeol(textWindow);
-                wmove(textWindow, cursorY + 1, 0);
-                lines.at(cursorY) = lines.at(cursorY).substr(0, cursorX);
-                lines.insert(lines.begin() + cursorY + 1, text);
-                winsertln(textWindow);
-                wprintw(textWindow, text.c_str());
-                wmove(textWindow, cursorY + 1, 0);
+                string text = lines.at(currentLine).substr(currentX, lines.at(currentLine).length() - 1);
+                cout << text << endl;
+                lines.at(currentLine) = lines.at(currentLine).substr(0, currentX);
+                lines.insert(lines.begin() + currentLine + 1, text);
+                currentLine++;
+                currentX = 0;
             }
-
+            cursorY++;
+            cursorX = 0;
             break;
         case KEY_UP:
-            if (cursorY - 1 >= 0)
+            if (currentLine > 0)
             {
-                if (cursorX > lines.at(cursorY - 1).length())
-                {
-                    wmove(textWindow, cursorY - 1, lines.at(cursorY - 1).length());
-                }
-                else
-                {
-                    wmove(textWindow, cursorY - 1, cursorX);
-                }
+                cursorY -= getIncrement(currentX, width - 1);
+                cursorX = getCurrentX(lines.at(currentLine - 1).length(), width - 1);
+                currentX = lines.at(currentLine - 1).length();
+                currentLine--;
             }
             break;
         case KEY_DOWN:
-            if (cursorY + 1 < lines.size())
+            if (currentLine + 1 < lines.size())
             {
-                if (cursorX > lines.at(cursorY + 1).length())
+                int y = 0;
+                int x = ceil((lines.at(currentLine + 1).length()) * 1.0 / (width - 1) * 1.0);
+                if (x == 0)
                 {
-                    wmove(textWindow, cursorY + 1, lines.at(cursorY + 1).length());
+                    x = 1;
                 }
                 else
                 {
-                    wmove(textWindow, cursorY + 1, cursorX);
+                    int r = ceil((lines.at(currentLine).length()) * 1.0 / (width - 1) * 1.0);
+                    if (r == 0)
+                    {
+                        r += 1;
+                    }
+                    y = r - getIncrement(currentX, width - 1);
                 }
-            }
 
+                cout << lines.at(currentLine).length() << ", " << getIncrement(currentX, width - 1);
+                cursorY += y + x;
+                cursorX = getCurrentX(lines.at(currentLine + 1).length(), width - 1);
+                currentX = lines.at(currentLine + 1).length();
+                currentLine++;
+            }
             break;
         case KEY_LEFT:
-            wmove(textWindow, cursorY, cursorX - 1);
+            if (currentX > 0)
+            {
+                currentX--;
+                if (cursorX > 0)
+                {
+                    cursorX--;
+                }
+                else
+                {
+                    cursorX = width - 2;
+                    cursorY--;
+                }
+            }
             break;
         case KEY_RIGHT:
-            if (cursorX < lines.at(cursorY).length())
+            if (currentX < lines.at(currentLine).length())
             {
-                wmove(textWindow, cursorY, cursorX + 1);
+                currentX++;
+                if (cursorX < width - 1)
+                {
+                    cursorX++;
+                }
+                else
+                {
+                    cursorX = 1;
+                    cursorY++;
+                }
             }
             break;
         }
 
+        // cout << cursorX << " " << cursorY << ", " << currentX << " " << currentLine << endl;
         getmaxyx(textWindow, height, width);
-        getyx(textWindow, cursorY, cursorX);
+        // getyx(textWindow, cursorY, cursorX);
+        rewriteScreen(textWindow, linesWindow, lines, cursorX, cursorY, width, height);
     }
     endwin();
 
