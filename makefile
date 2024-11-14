@@ -5,7 +5,7 @@ CXXFLAGS = -std=c++17 -Iinclude -Wall -Wextra -O2
 TARGET = myst.exe
 
 # Source files
-SRC_FILES = src/main.cpp src/editor.cpp src/file.cpp
+SRC_FILES = src/main.cpp src/editor.cpp src/cmd.cpp src/file.cpp
 
 all: $(TARGET)
 

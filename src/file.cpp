@@ -10,14 +10,130 @@ File::File()
 File Class Constructor
 
 Vars:
-    vector<string? lines: Lines that are in the file
+    (string) name: Name of the file
+    (vector<string?) lines: Lines that are in the file
 
 Returns:
     void
  */
 
 {
-    lines = {""};
+    name = "";
+    lines = {};
+}
+
+string File::replaceAll(string str, const string from, const string to)
+/**
+Replaces all instances of a string inside another string
+
+Args:
+    (string) str: String that will have the string to be replaced
+    (string) from: String that is being replaced in "str"
+    (string) to: String that is replacing "from" in "str"
+
+Returns:
+    string
+ */
+
+{
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != string::npos) // Loop till "from" not in the string
+    {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+    return str;
+}
+
+void File::open(string n)
+/**
+Opens text file and puts it into lines vector
+
+Args:
+    (string) n: Name of the file
+
+Returns:
+    void
+ */
+
+{
+    setName(n);
+
+    int lineNum = 0;
+    string text;
+    lines = {};
+    fstream readFile(name);
+    if (readFile.fail())
+    {
+        insertLine(0, "");
+    }
+    else
+    {
+        while (getline(readFile, text))
+        {
+            insertLine(lineNum, text);
+            lineNum++;
+        }
+    }
+
+    readFile.close();
+}
+
+bool File::save()
+/**
+Saves the file
+
+Returns:
+    bool
+ */
+
+{
+    fstream writeFile(name, ios::out | ios::trunc);
+    if (writeFile.fail())
+    {
+        return false;
+    }
+
+    int counter = 0;
+    for (const string &line : lines)
+    {
+        writeFile << line;
+        if (counter != (int)lines.size() - 1)
+        {
+            writeFile << "\n";
+        }
+        counter += 1;
+    }
+    writeFile.close();
+
+    return true;
+}
+
+void File::setTabSize(string tab)
+/**
+Sets size of the tab for the file
+
+Args:
+    (string) tab: Size of the new tab
+
+Returns:
+    void
+ */
+
+{
+    tabsize = tab;
+}
+
+string File::getName()
+/**
+Name Getter Function
+
+Returns:
+    string
+ */
+
+{
+    return name;
 }
 
 void File::setName(string n)
@@ -25,7 +141,7 @@ void File::setName(string n)
 Name Setter Function
 
 Args:
-    (string) n: Name of the file
+    (string) n: Name to replace current name
 
 Returns:
     void
@@ -47,6 +163,37 @@ Returns:
     return lines;
 }
 
+void File::printLines()
+/**
+Prints each line out
+
+Returns:
+    Void
+ */
+
+{
+    for (const string &line : lines)
+    {
+        cout << line << endl;
+    }
+}
+
+int File::getLineLength(int lineNum)
+/**
+Gets Length of Line
+
+Args:
+    (int) lineNum: Line Number of the file
+
+Returns:
+    int
+ */
+
+{
+    string copiedLine = replaceAll(lines.at(lineNum), "\t", tabsize);
+    return copiedLine.length();
+}
+
 string File::getLine(int lineNum)
 /**
 Line Getter Function
@@ -55,7 +202,7 @@ Args:
     (int) lineNum: Line Number of the file
 
 Returns:
-    strinb
+    string
  */
 
 {
@@ -108,7 +255,7 @@ Returns:
  */
 
 {
-    lines.at(lineNum) = lines.at(lineNum).substr(0, x) + character + lines.at(lineNum).substr(x, lines.at(lineNum).length());
+    lines.at(lineNum) = lines.at(lineNum).substr(0, x) + character + lines.at(lineNum).substr(x, getLineLength(lineNum));
 }
 
 void File::delChar(int lineNum, int x)
