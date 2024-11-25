@@ -1,15 +1,83 @@
-#include <ncurses/ncurses.h>
+// cd mnt/c/Users/ostou/Documents/Projects/Myst
+
+#include <ncurses.h>
 #include <iostream>
 #include <filesystem>
 #include <cstdio>
 #include <stdio.h>
 #include <math.h>
 #include <vector>
-#include <string>
+#include <string.h>
 #include "editor.h"
 #include "cmd.h"
+extern "C"
+{
+#include "ini.h"
+}
 
 using namespace std;
+
+struct Settings
+{
+    int tabsize = 4;
+    bool linenums = true;
+    bool autocomplete = false;
+};
+
+int getSettings(void *user, const char *section, const char *name, const char *value)
+/**
+Get Settings from ini file
+
+Args:
+    (void*) user
+    (const char*) section: Section of the variables
+    (const char*) name: Name of the variable
+    (const char*) value: Value of the variable
+
+Returns:
+    num
+ */
+
+{
+    Settings *settings = (Settings *)user;
+
+    if (strcmp(section, "editor") == 0)
+    {
+        if (strcmp(name, "tabsize") == 0)
+        {
+            settings->tabsize = atoi(value);
+        }
+        else if (strcmp(name, "linenums") == 0)
+        {
+            settings->linenums = strcmp(value, "true") == 0;
+        }
+        else if (strcmp(name, "autocomplete") == 0)
+        {
+            settings->autocomplete = strcmp(value, "true") == 0;
+        }
+    }
+    return 1;
+}
+
+void setSettings(Settings settings)
+/**
+Sets Settings and updates ini file
+
+Args:
+    (Settings) settings: Settings object
+
+Returns:
+    void
+ */
+
+{
+    fstream file("config/settings.ini", ios::out | ios::trunc);
+    file << "[editor]\n";
+    file << "tabsize = " << settings.tabsize << "\n";
+    file << "linenums = " << (settings.linenums ? "true" : "false") << "\n";
+    file << "autocomplete = " << (settings.autocomplete ? "true" : "false") << "\n";
+    file.close();
+}
 
 bool fileError(string file)
 /**
@@ -33,12 +101,39 @@ Returns:
     return false;
 }
 
-void editorSpecialKeys(WINDOW *cmdWin, Editor &editor, CommandLine &cmd, int character)
+void displayLogo(int h, int w)
+/**
+Displays the logo onto the screen
+
+Args:
+    (int) h: Height of the terminal
+    (int) w: Width of the terminal
+
+Returns:
+    void
+ */
+
+{
+    curs_set(0);
+
+    string text;
+    int tempY = (h / 2) - (17 / 2);
+
+    fstream readFile("resources/logo.txt");
+    while (getline(readFile, text))
+    {
+        mvprintw(tempY, (w / 2) - (text.length() / 2), text.c_str());
+        tempY++;
+    }
+
+    readFile.close();
+}
+
+void editorSpecialKeys(Editor &editor, CommandLine &cmd, int character)
 /**
 Checks what special character has been pressed in the editor tab
 
 Args:
-    (WINDOW*) cmdWin: CommandLine Window Object
     (Editor&) editor: Editor Object
     (CommandLine&) cmd: CommandLine Object
     (int) character: The special character
@@ -48,58 +143,142 @@ Returns:
  */
 
 {
+    MEVENT event;
     switch (character)
     {
-    case 8:
-        editor.backspace();
-        cmd.clear(cmdWin);
+    case KEY_MOUSE:
+        if (getmouse(&event) == OK)
+        {
+            if (event.bstate & BUTTON4_PRESSED)
+            {
+                editor.scrollUp();
+            }
+            else if (event.bstate & BUTTON5_PRESSED)
+            {
+                editor.scrollDown();
+            }
+        }
+        break;
+
+    case KEY_RESIZE:
+        curs_set(0);
+        editor.updateDimensions();
+        cmd.updateDimensions();
+        curs_set(1);
+        break;
+
+    case KEY_BACKSPACE:
+        editor.deleteHighlighted();
+        if (!editor.highlighting)
+        {
+            editor.backspace();
+        }
+        editor.goToMouse();
+        editor.endHightlight();
+        cmd.clear();
         break;
 
     case 9:
         editor.tab();
-        cmd.clear(cmdWin);
+        editor.goToMouse();
+        cmd.clear();
         break;
 
     case 10:
+        editor.deleteHighlighted();
+        editor.endHightlight();
         editor.enter();
-        cmd.clear(cmdWin);
+        editor.goToMouse();
+        cmd.clear();
+        break;
+
+    case (65 & 0x1F):
+        editor.ctrlA();
+        break;
+
+    case (67 & 0x1F):
+        editor.ctrlC();
+        break;
+
+    case (86 & 0x1F):
+        editor.ctrlV();
+        editor.goToMouse();
         break;
 
     case (88 & 0x1F):
         editor.ctrlX();
-        cmd.clear(cmdWin);
+        editor.goToMouse();
+        cmd.clear();
         break;
 
     case (83 & 0x1F):
-        editor.ctrlS(cmdWin, cmd);
+        editor.ctrlS(cmd);
+        break;
+
+    case KEY_SR:
+        editor.shiftUpArrow();
+        editor.goToMouse();
+        break;
+
+    case KEY_SF:
+        editor.shiftDownArrow();
+        editor.goToMouse();
+        break;
+
+    case KEY_SLEFT:
+        editor.shiftLeftArrow();
+        editor.goToMouse();
+        break;
+
+    case KEY_SRIGHT:
+        editor.shiftRightArrow();
+        editor.goToMouse();
         break;
 
     case KEY_UP:
-        editor.upArrow();
+        if (!editor.highlighting)
+        {
+            editor.upArrow();
+        }
+        editor.goToMouse();
+        editor.endHightlight();
         break;
 
     case KEY_DOWN:
-        editor.downArrow();
+        if (!editor.highlighting)
+        {
+            editor.downArrow();
+        }
+        editor.goToMouse();
+        editor.endHightlight();
         break;
 
     case KEY_LEFT:
-        editor.leftArrow();
+        if (!editor.highlighting)
+        {
+            editor.leftArrow();
+        }
+        editor.goToMouse();
+        editor.endHightlight();
         break;
 
     case KEY_RIGHT:
-        editor.rightArrow();
+        if (!editor.highlighting)
+        {
+            editor.rightArrow();
+        }
+        editor.goToMouse();
+        editor.endHightlight();
         break;
     }
 }
 
-void cmdSpecialKeys(WINDOW *cmdWin, WINDOW *textWin, WINDOW *linesWin, CommandLine &cmd, Editor &editor, int character, int &mode)
+void cmdSpecialKeys(Settings &settings, CommandLine &cmd, Editor &editor, int character, int &mode)
 /**
 Checks what special character has been pressed in the command tab
 
 Args:
-    (WINDOW*) cmdWin: CommandLine Window
-    (WINDOW*) textWin: Text Window
-    (WINDOW*) linesWin: Line Window
+    (Settings&) settings: Settings object
     (CommandLine&) cmd: CommandLine object
     (Editor&) editor: Editor object
     (int) character: The special character
@@ -112,21 +291,34 @@ Returns:
 {
     switch (character)
     {
-    case 8:
-        cmd.clear(cmdWin);
+    case KEY_RESIZE:
+        curs_set(0);
+        cmd.updateDimensions();
+        editor.updateDimensions();
+        editor.writeToScreen(false);
+        curs_set(1);
+        break;
+
+    case KEY_BACKSPACE:
         cmd.backspace();
+        cmd.clear();
         break;
 
     case 10:
-        mode = editor.enactCommand(cmdWin, cmd, cmd.enter(cmdWin));
+        mode = editor.enactCommand(cmd, cmd.enter());
+        settings.tabsize = editor.getTab();
+        settings.linenums = editor.getLineNumbers();
+        settings.autocomplete = editor.getAutoComplete();
+
         if (editor.getCursorX() != 0 || editor.getCursorY() != 0)
         {
-            editor.writeToScreen(textWin, linesWin, false);
+            editor.writeToScreen(false);
         }
         else
         {
-            editor.writeToScreen(textWin, linesWin, true);
+            editor.writeToScreen(true);
         }
+        setSettings(settings);
         break;
 
     case KEY_LEFT:
@@ -139,14 +331,11 @@ Returns:
     }
 }
 
-int editorMode(WINDOW *textWin, WINDOW *linesWin, WINDOW *cmdWin, Editor &editor, CommandLine &cmd, int mode)
+int editorMode(Editor &editor, CommandLine &cmd, int mode)
 /**
 Handles when user is in the editor tab
 
 Args:
-    (WINDOW*) textWin: Text Window
-    (WINDOW*) linesWin: Line Window
-    (WINDOW*) cmdWin: CommandLine Window
     (Editor&) editor: Editor object
     (CommandLine&) cmd: CommandLine object
     (int&) mode: Mode of the editor
@@ -156,9 +345,8 @@ Returns:
  */
 
 {
-    int character = wgetch(textWin);
-
-    if (character == 27)
+    int character = wgetch(editor.textPad);
+    if (character == KEY_F(1))
     {
         mode = (mode == 1) ? 2 : 1;
     }
@@ -169,35 +357,37 @@ Returns:
         if (editor.endOfLine())
         {
             editor.addCharacter(char(character));
-            cmd.clear(cmdWin);
+            editor.goToMouse();
+            cmd.clear();
         }
         else
         {
             editor.insertCharacter(char(character));
-            cmd.clear(cmdWin);
+            editor.goToMouse();
+            cmd.clear();
         }
     }
 
-    editorSpecialKeys(cmdWin, editor, cmd, character);
-    editor.writeToScreen(textWin, linesWin, false);
+    editorSpecialKeys(editor, cmd, character);
+
+    curs_set(0);
+    editor.writeToScreen(false);
 
     if (mode == 2)
     {
-        wmove(cmdWin, 0, cmd.getCursorX());
-        wrefresh(cmdWin);
+        wmove(cmd.commandWindow, 0, cmd.getCursorX());
+        wrefresh(cmd.commandWindow);
     }
 
     return mode;
 }
 
-int cmdMode(WINDOW *cmdWin, WINDOW *textWin, WINDOW *lineWin, CommandLine &cmd, Editor &editor, int mode)
+int cmdMode(Settings &settings, CommandLine &cmd, Editor &editor, int mode)
 /**
 Handles when user is in the command tab
 
 Args:
-    (WINDOW*) cmdWin: CommandLine Window
-    (WINDOW*) textWin: Text Window
-    (WINDOW*) linesWin: Line Window
+    (Settings&) settings: Settings object
     (CommandLine&) cmd: CommandLine object
     (Editor&) editor: Editor object
     (int&) mode: Mode of the editor
@@ -207,9 +397,8 @@ Returns:
  */
 
 {
-    int character = wgetch(cmdWin);
-
-    if (character == 27)
+    int character = wgetch(cmd.commandWindow);
+    if (character == KEY_F(1))
     {
         mode = (mode == 2) ? 1 : 2;
     }
@@ -219,37 +408,34 @@ Returns:
     {
         if (cmd.endOfLine())
         {
-            cmd.clear(cmdWin);
+            cmd.clear();
             cmd.addCharacter(char(character));
         }
         else
         {
-            cmd.clear(cmdWin);
+            cmd.clear();
             cmd.insertCharacter(char(character));
         }
     }
 
-    cmdSpecialKeys(cmdWin, textWin, lineWin, cmd, editor, character, mode);
-    cmd.updateCommand(cmdWin);
+    cmdSpecialKeys(settings, cmd, editor, character, mode);
+    cmd.updateCommand();
 
     if (mode == 1)
     {
-        cmd.clearCmd(cmdWin);
-        wmove(textWin, editor.getCursorY(), editor.getCursorX());
-        wrefresh(textWin);
+        cmd.clearCmd();
+        prefresh(editor.textPad, editor.getScroll(), 0, 0, 0, editor.getHeight(), editor.getWidth());
     }
 
     return mode;
 }
 
-void openFile(WINDOW *textWin, WINDOW *linesWin, WINDOW *cmdWin, Editor &editor, CommandLine &cmd, string fileName, int mode)
+void openFile(Settings &settings, Editor &editor, CommandLine &cmd, string fileName, int mode)
 /**
 Opens "file" and checks for input from the user to update the terminal
 
 Args:
-    (WINDOW*) textWin: Window for the editor
-    (WINDOW*) linesWin: Window for the lines
-    (WINDOW*) cmdWin: Window for the command line
+    (Settings&) settings: Settings object
     (Editor) editor: Editor object
     (CommandLine&) cmd: CommandLine object
     (string) fileName: Name of the file being opened
@@ -265,19 +451,18 @@ Returns:
     file.open(fileName);
     editor.setFile(file);
 
-    editor.writeToScreen(textWin, linesWin, true);
+    editor.writeToScreen(false);
 
     // Loop till ESC button is pressed
     while (true)
     {
         if (mode == 1)
         {
-            mode = editorMode(textWin, linesWin, cmdWin, editor, cmd, mode);
+            mode = editorMode(editor, cmd, mode);
         }
-
         else if (mode == 2)
         {
-            mode = cmdMode(cmdWin, textWin, linesWin, cmd, editor, mode);
+            mode = cmdMode(settings, cmd, editor, mode);
         }
         else
         {
@@ -288,49 +473,71 @@ Returns:
 
 int main(int argc, char **argv)
 {
-    Editor editor;
-    CommandLine cmd;
-    int mode = 1;
+    Settings settings;
 
     // Setup ncurses
     initscr();
 
     int w, h;
     getmaxyx(stdscr, h, w);
+
+    mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
     noecho();
+    cbreak();
     raw();
+
+    use_default_colors();
     start_color();
 
-    // Setup windows
-    WINDOW *linesWindow = newwin(h - 1, 3, 0, 0);
-    WINDOW *textWindow = newwin(h - 1, w - 3, 0, 3);
-    WINDOW *cmdWindow = newwin(1, w, h - 1, 0);
+    Editor editor(w, h);
+    CommandLine cmd(w, h);
+    int mode = 1;
 
-    keypad(textWindow, true);
-    keypad(cmdWindow, true);
-
-    getmaxyx(textWindow, h, w);
-    editor.setWidth(w);
-    editor.setHeight(h);
-    cmd.setWidth(w);
-
-    // Get file from arguments passed when program is run
-    string file = argc > 1 ? argv[1] : "";
-    if (file == "-help")
+    if (argc < 3)
     {
-        cout << "save" << endl;
-        cout << "saveas" << endl;
-        cout << "switch" << endl;
-        cout << "linenums" << endl;
-        cout << "tabsize" << endl;
-    }
-    else if (fileError(file) && file != "")
-    {
-        cout << "Unknown File Location." << endl;
+        // Get file from arguments passed when program is run
+        string file = argc > 1 ? argv[1] : "";
+        if (file == "-help")
+        {
+            string text;
+            fstream readFile("resources/help.txt");
+            while (getline(readFile, text))
+            {
+                cout << text << endl;
+            }
+        }
+
+        else if (fileError(file) && file != "")
+        {
+            cout << "Unknown File Location." << endl;
+        }
+
+        else
+        {
+            keypad(stdscr, true);
+            keypad(editor.textPad, true);
+            keypad(cmd.commandWindow, true);
+
+            // Parse the INI file and fill the settings struct
+            if (ini_parse("config/settings.ini", getSettings, &settings) < 0)
+            {
+                cout << "Can't load 'settings.ini'\n";
+            }
+            editor.setSettings(settings.tabsize, settings.linenums, settings.autocomplete);
+
+            if (file == "")
+            {
+                displayLogo(h, w);
+                getch();
+            }
+
+            curs_set(1);
+            openFile(settings, editor, cmd, file, mode);
+        }
     }
     else
     {
-        openFile(textWindow, linesWindow, cmdWindow, editor, cmd, file, mode);
+        cout << "Unknown Command." << endl;
     }
 
     endwin();

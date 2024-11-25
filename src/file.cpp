@@ -22,29 +22,6 @@ Returns:
     lines = {};
 }
 
-string File::replaceAll(string str, const string from, const string to)
-/**
-Replaces all instances of a string inside another string
-
-Args:
-    (string) str: String that will have the string to be replaced
-    (string) from: String that is being replaced in "str"
-    (string) to: String that is replacing "from" in "str"
-
-Returns:
-    string
- */
-
-{
-    size_t start_pos = 0;
-    while ((start_pos = str.find(from, start_pos)) != string::npos) // Loop till "from" not in the string
-    {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length();
-    }
-    return str;
-}
-
 void File::open(string n)
 /**
 Opens text file and puts it into lines vector
@@ -59,9 +36,9 @@ Returns:
 {
     setName(n);
 
+    lines = {};
     int lineNum = 0;
     string text;
-    lines = {};
     fstream readFile(name);
     if (readFile.fail())
     {
@@ -209,6 +186,52 @@ Returns:
     return lines.at(lineNum);
 }
 
+string File::getLineWTabs(int lineNum)
+/**
+Line Getter Function
+
+Args:
+    (int) lineNum: Line Number of the file
+
+Returns:
+    string
+ */
+
+{
+    return replaceAll(lines.at(lineNum), "\t", tabsize);
+}
+
+vector<int> File::getTabs(int lineNum, int tabSize)
+/**
+Get the number of tabs in the line
+
+Args:
+    (int) lineNum: Line Number of the file
+    (int) tabSize: Number tab size
+
+Returns:
+    string
+ */
+
+{
+    vector<int> tabs = {};
+    int value = 0;
+    for (int x = 0; x < getLine(lineNum).length(); x++)
+    {
+        if (getLine(lineNum)[value] == '\t')
+        {
+            value += tabSize;
+            tabs.push_back(value);
+        }
+        else
+        {
+            value++;
+        }
+    }
+
+    return tabs;
+}
+
 void File::setLine(int lineNum, string str)
 /**
 Line Setter Function
@@ -319,4 +342,27 @@ Returns:
 
 {
     lines.erase(lines.begin() + lineNum);
+}
+
+string File::replaceAll(string str, const string from, const string to)
+/**
+Replaces all instances of a string inside another string
+
+Args:
+    (string) str: String that will have the string to be replaced
+    (string) from: String that is being replaced in "str"
+    (string) to: String that is replacing "from" in "str"
+
+Returns:
+    string
+ */
+
+{
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != string::npos) // Loop till "from" not in the string
+    {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+    return str;
 }

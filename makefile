@@ -1,17 +1,21 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Iinclude -Wall -Wextra -O2
+CXXFLAGS = -std=c++17 -Iinclude -Ilib -Wall -Wextra -O2
 
 # Target executable name
-TARGET = myst.exe
+TARGET = build/myst.exe
 
 # Source files
-SRC_FILES = src/main.cpp src/editor.cpp src/cmd.cpp src/file.cpp
+SRC_FILES = src/main.cpp src/editor.cpp src/cmd.cpp src/file.cpp lib/ini.c
 
-all: $(TARGET)
+all: build_dir $(TARGET)
 
 # Build target
 $(TARGET): $(SRC_FILES)
-	$(CXX) $(CXXFLAGS) $(SRC_FILES) -o $(TARGET) -lncurses -DNCURSES_STATIC
+	$(CXX) $(CXXFLAGS) $(SRC_FILES) -o $(TARGET) -lncurses
+
+# Create build directory if it doesn't exist
+build_dir:
+	mkdir -p build
 
 # Run the executable
 run: $(TARGET)

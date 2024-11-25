@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include <vector>
-#include <ncurses/curses.h>
+#include <curses.h>
 
 using namespace std;
 
@@ -13,25 +13,27 @@ class CommandLine
 {
 private:
     string cmdTxt, line;
-    int width;
+    int width, height;
     int cursorX, cursorY;
 
 public:
-    CommandLine();
+    CommandLine(int w, int h);
+    WINDOW *commandWindow;
     int getWidth();
-    int getCursorX();
     void setWidth(int w);
+    int getCursorX();
+    void updateDimensions();
     bool endOfLine();
     void addCharacter(char character);
     void insertCharacter(char character);
     void backspace();
-    vector<string> enter(WINDOW *cmdWin);
+    vector<string> enter();
     void leftArrow();
     void rightArrow();
-    void updateCommand(WINDOW *cmdWin);
-    void displayInfo(WINDOW *cmdWin, string text);
-    void displayError(WINDOW *cmdWin, string text);
-    void clear(WINDOW *cmdWin);
-    void clearCmd(WINDOW *cmdWin);
-    vector<string> parseCommand(WINDOW *cmdWin);
+    void updateCommand();
+    void displayInfo(string text);
+    void displayError(string text);
+    void clear();
+    void clearCmd();
+    vector<string> parseCommand();
 };

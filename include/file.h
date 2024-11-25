@@ -18,7 +18,6 @@ private:
 
 public:
     File();
-    string replaceAll(string str, const string from, const string to);
     string getName();
     void setName(string n);
     void open(string n);
@@ -28,6 +27,8 @@ public:
     void printLines();
     int getLineLength(int lineNum);
     string getLine(int lineNum);
+    string getLineWTabs(int lineNum);
+    vector<int> getTabs(int lineNum, int tabSize);
     void setLine(int lineNum, string str);
     void addChar(int lineNum, char character);
     void insertChar(int lineNum, int x, char character);
@@ -35,4 +36,5 @@ public:
     void addStr(int lineNum, string str);
     void insertLine(int lineNum, string line);
     void delLine(int lineNum);
+    string replaceAll(string str, const string from, const string to);
 };

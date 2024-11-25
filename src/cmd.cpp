@@ -1,26 +1,30 @@
 #pragma once
 #include "cmd.h"
 
-CommandLine::CommandLine()
+CommandLine::CommandLine(int w, int h)
 /**
 Editor Class Constructor
 
 Vars:
-    (string) cmdTxt: Command being written into the command line
-    (string) line: Error being displayed in the command line
     (int) width: Width of the command line
+    (int) height: Height of the command line
     (int) cursorX: X-Index that the cursor is on in the command line
     (int) cursorY: Y-Index that the cursor is on in the command line (always zero)
+    (string) line: Error being displayed in the command line
+    (string) cmdTxt: Command being written into the command line
+    (WINDOW*) commandWindow: Window for the command line
 
 Returns:
     void
  */
 
 {
+    width, height = w, h;
+    cursorX = cursorY = 0;
     cmdTxt = "";
     line = "";
-    width = 0;
-    cursorX = cursorY = 0;
+    commandWindow = newwin(1, width, height - 1, 0);
+    getmaxyx(commandWindow, height, width);
 }
 
 int CommandLine::getWidth()
@@ -33,18 +37,6 @@ Returns:
 
 {
     return width;
-}
-
-int CommandLine::getCursorX()
-/**
-CursorX Getter Function
-
-Returns:
-    int
- */
-
-{
-    return cursorX;
 }
 
 void CommandLine::setWidth(int w)
@@ -60,6 +52,35 @@ Returns:
 
 {
     width = w;
+}
+
+int CommandLine::getCursorX()
+/**
+CursorX Getter Function
+
+Returns:
+    int
+ */
+
+{
+    return cursorX;
+}
+
+void CommandLine::updateDimensions()
+/**
+Updates size of window if terminal has been changed
+
+Returns:
+    void
+ */
+
+{
+    getmaxyx(stdscr, height, width);
+    delwin(commandWindow);
+    commandWindow = newwin(1, width, height - 1, 0);
+    getmaxyx(commandWindow, height, width);
+    keypad(commandWindow, true);
+    wrefresh(commandWindow);
 }
 
 bool CommandLine::endOfLine()
@@ -128,18 +149,16 @@ Returns:
     }
 }
 
-vector<string> CommandLine::enter(WINDOW *cmdWin)
+vector<string> CommandLine::enter()
 /**
 Passes the command to "parseCommand()" and deletes it
 
-Args:
-    (WINDOW*) cmdWin: Window of the CommandLine
 Returns:
     void
  */
 
 {
-    vector<string> command = parseCommand(cmdWin);
+    vector<string> command = parseCommand();
     return command;
 }
 
@@ -173,12 +192,9 @@ Returns:
     }
 }
 
-void CommandLine::updateCommand(WINDOW *cmdWin)
+void CommandLine::updateCommand()
 /**
 Updates the command in the command line
-
-Args:
-    (WINDOW*) cmdWin: Window of the command line
 
 Returns:
     void
@@ -187,19 +203,19 @@ Returns:
 {
     if (line.length() == 0)
     {
-        werase(cmdWin);
-        mvwprintw(cmdWin, 0, 0, cmdTxt.c_str());
-        wmove(cmdWin, cursorY, cursorX);
-        wrefresh(cmdWin);
+        werase(commandWindow);
+        mvwprintw(commandWindow, 0, 0, cmdTxt.c_str());
+        wmove(commandWindow, cursorY, cursorX);
+        getmaxyx(commandWindow, height, width);
+        wrefresh(commandWindow);
     }
 }
 
-void CommandLine::displayInfo(WINDOW *cmdWin, string text)
+void CommandLine::displayInfo(string text)
 /**
 Displays an info message with colours in the command line
 
 Args:
-    (WINDOW*) cmdWin: Window of the command line
     (string) text: Text to display in the info message
 
 Returns:
@@ -207,24 +223,23 @@ Returns:
  */
 
 {
+    init_pair(1, COLOR_GREEN, -1);
     line = text;
     cmdTxt = "";
     cursorX = 0;
-    init_pair(1, COLOR_WHITE, COLOR_GREEN);
-    attron(A_BOLD);
-    wattron(cmdWin, COLOR_PAIR(1));
-    mvwprintw(cmdWin, 0, 0, text.c_str());
-    wattroff(cmdWin, COLOR_PAIR(1));
-    attron(A_BOLD);
-    wrefresh(cmdWin);
+
+    wattron(commandWindow, COLOR_PAIR(1));
+    mvwprintw(commandWindow, 0, 0, text.c_str());
+    wattroff(commandWindow, COLOR_PAIR(1));
+
+    wrefresh(commandWindow);
 }
 
-void CommandLine::displayError(WINDOW *cmdWin, string text)
+void CommandLine::displayError(string text)
 /**
 Displays an error message with colours in the command line
 
 Args:
-    (WINDOW*) cmdWin: Window of the command line
     (string) text: Text to display in the error message
 
 Returns:
@@ -232,22 +247,21 @@ Returns:
  */
 
 {
+    init_pair(1, COLOR_RED, -1);
     line = text;
     cmdTxt = "";
     cursorX = 0;
-    init_pair(1, COLOR_BLACK, COLOR_RED);
-    wattron(cmdWin, COLOR_PAIR(1));
-    mvwprintw(cmdWin, 0, 0, text.c_str());
-    wattroff(cmdWin, COLOR_PAIR(1));
-    wrefresh(cmdWin);
+
+    wattron(commandWindow, COLOR_PAIR(1));
+    mvwprintw(commandWindow, 0, 0, text.c_str());
+    wattroff(commandWindow, COLOR_PAIR(1));
+
+    wrefresh(commandWindow);
 }
 
-void CommandLine::clear(WINDOW *cmdWin)
+void CommandLine::clear()
 /**
 Clears all commands from the command line
-
-Args:
-    (WINDOW*) cmdWin: Window of the command line
 
 Returns:
     void
@@ -256,18 +270,15 @@ Returns:
 {
     if (line.length() > 0)
     {
-        werase(cmdWin);
-        wrefresh(cmdWin);
+        werase(commandWindow);
+        wrefresh(commandWindow);
         line = "";
     }
 }
 
-void CommandLine::clearCmd(WINDOW *cmdWin)
+void CommandLine::clearCmd()
 /**
 Clears all info and error messages from the command line
-
-Args:
-    (WINDOW*) cmdWin: Window of the command line
 
 Returns:
     void
@@ -276,15 +287,12 @@ Returns:
 {
     cmdTxt = "";
     cursorX = 0;
-    updateCommand(cmdWin);
+    updateCommand();
 }
 
-vector<string> CommandLine::parseCommand(WINDOW *cmdWin)
+vector<string> CommandLine::parseCommand()
 /**
 Parses through the command if it has been entered
-
-Args:
-    (WINDOW*) cmdWin: Window of the command line
 
 Returns:
     void
@@ -292,7 +300,7 @@ Returns:
 
 {
     vector<string> commands = {"", ""};
-    if (cmdTxt == "save" || cmdTxt == "linenums" || cmdTxt == "quit" || cmdTxt == "switch")
+    if (cmdTxt == "save" || cmdTxt == "linenums" || cmdTxt == "quit" || cmdTxt == "switch" || cmdTxt == "autocomplete")
     {
         commands[0] = cmdTxt;
     }
@@ -322,13 +330,13 @@ Returns:
 
     if (cmdTxt == "tabsize" || (commands[0] == "tabsize" && commands[1].length() == 0))
     {
-        displayError(cmdWin, "Invalid Tabsize");
+        displayError("Invalid Tabsize");
     }
     if (commands[0].length() == 0 and line.length() == 0)
     {
-        displayError(cmdWin, "Invalid Command. (Enter \"help\" to see a list of commands)");
+        displayError("Invalid Command. (Enter \"myst -help\" in your terminal to see a list of commands)");
     }
 
-    clearCmd(cmdWin);
+    clearCmd();
     return commands;
 }

@@ -1,0 +1,17 @@
+Myst is a simple terminal-based text editor.
+
+General Usage:
+  myst              Opens a blank file in the editor.
+  myst {file name}  Opens the specified file. If the file does not exist, it will be created upon saving.
+
+Commands (to be used within the Myst editor):
+
+  save                 Saves the current file if a filename has been specified.
+  saveas {file name}   Saves the file with the specified name. If the file exists, it will be overwritten.
+  switch {file name}   Switches to edit a different file. If no name is provided, a new blank file opens.
+  linenums             Toggles line numbers on or off.
+  tabsize {size}       Sets the tab size for indentation within the editor.
+  autocomplete         Toggles code autocomplete functionality, useful for programming.
+
+Options:
+  -help                Displays this help message.
