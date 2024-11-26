@@ -24,7 +24,8 @@ Returns:
 
 {
 	maxHeight = 1000;
-	width, height = w, h;
+	width = w;
+	height = h;
 	lineNumbersWidth = 4;
 	cursorX = cursorY = 0;
 	lineX = lineY = 0;
@@ -41,6 +42,7 @@ Returns:
 	textPad = newpad(maxHeight, w - lineNumbersWidth);
 	linesPad = newpad(maxHeight, lineNumbersWidth);
 	width -= lineNumbersWidth;
+	state = "";
 }
 
 File Editor::getFile()
@@ -71,6 +73,23 @@ Returns:
 	file.setTabSize(tabSpaces);
 }
 
+void Editor::setStack(HistoryStack s)
+/**
+Stack Setter Function
+
+Args:
+	(HistoryStack) s: HistoryStack object
+
+Returns:
+	void
+ */
+
+{
+	stack = s;
+	stack.addToStack(file.getLines(), lineX, lineY);
+	stack.truncateStack();
+}
+
 void Editor::setSettings(int tab, bool line, bool autocomp)
 /**
 Update the editor settings with arguments
@@ -92,7 +111,7 @@ Returns:
 	file.setTabSize(tabSpaces);
 }
 
-bool checkSpecialChar(char character)
+bool Editor::checkSpecialChar(char character)
 /**
 Check if character is a special character
 
@@ -183,6 +202,18 @@ Returns:
 
 {
 	height = h;
+}
+
+int Editor::getNumbersWidth()
+/**
+lineNumbersWidth Getter Function
+
+Returns:
+	int
+ */
+
+{
+	return lineNumbersWidth;
 }
 
 int Editor::getScroll()
@@ -346,6 +377,12 @@ Returns:
  */
 
 {
+	if (state != "add" && state != "ctrlv")
+	{
+		state = "add";
+		stack.addToStack(file.getLines(), lineX, lineY);
+		stack.truncateStack();
+	}
 	if (!autoComplete || !checkSpecialChar(character))
 	{
 		deleteHighlighted();
@@ -415,6 +452,11 @@ Returns:
 			}
 		}
 	}
+
+	if (state != "ctrlv")
+	{
+		stack.updateStack(file.getLines(), lineX, lineY);
+	}
 }
 
 void Editor::insertCharacter(char character)
@@ -429,6 +471,12 @@ Returns:
  */
 
 {
+	if (state != "insert")
+	{
+		state = "insert";
+		stack.addToStack(file.getLines(), lineX, lineY);
+		stack.truncateStack();
+	}
 	if ((!autoComplete || !checkSpecialChar(character) || !highlighting))
 	{
 		deleteHighlighted();
@@ -499,6 +547,7 @@ Returns:
 			}
 		}
 	}
+	stack.updateStack(file.getLines(), lineX, lineY);
 }
 
 void Editor::backspace()
@@ -511,6 +560,27 @@ Returns:
  */
 
 {
+	if (cursorY != 0 || cursorX != 0)
+	{
+		if (endOfLine())
+		{
+			if (state != "end del")
+			{
+				state = "end del";
+				stack.addToStack(file.getLines(), lineX, lineY);
+				stack.truncateStack();
+			}
+		}
+		else
+		{
+			if (state != "middle del")
+			{
+				state = "middle del";
+				stack.addToStack(file.getLines(), lineX, lineY);
+				stack.truncateStack();
+			}
+		}
+	}
 	if (cursorX > 0)
 	{
 		int sub = 1;
@@ -550,6 +620,7 @@ Returns:
 			}
 		}
 	}
+	stack.updateStack(file.getLines(), lineX, lineY);
 }
 
 void Editor::tab()
@@ -561,6 +632,12 @@ Returns:
  */
 
 {
+	if (state != "tab" && state != "ctrlv")
+	{
+		state = "tab";
+		stack.addToStack(file.getLines(), lineX, lineY);
+		stack.truncateStack();
+	}
 	if (highlighting)
 	{
 		lineX += tabSize;
@@ -575,9 +652,9 @@ Returns:
 	}
 	else
 	{
-		lineX += tabSize;
 		if (endOfLine())
 		{
+			lineX += tabSize;
 			file.addChar(lineY, '\t');
 			if (cursorX + (tabSize - 1) < width - 1) // Check if cursor is at the end of a line
 			{
@@ -592,6 +669,7 @@ Returns:
 		else
 		{
 			file.insertChar(lineY, getTabX(lineX), '\t');
+			lineX += tabSize;
 			if (cursorX + tabSize < width - 1) // Check if cursor is at the end of a line
 			{
 				cursorX += tabSize;
@@ -602,6 +680,11 @@ Returns:
 				cursorY++;
 			}
 		}
+	}
+	if (state != "ctrlv")
+	{
+		stack.updateStack(file.getLines(), lineX, lineY);
+		state = "";
 	}
 }
 
@@ -615,6 +698,12 @@ Returns:
  */
 
 {
+	if (state != "enter" and state != "ctrlv")
+	{
+		state = "enter";
+		stack.addToStack(file.getLines(), lineX, lineY);
+		stack.truncateStack();
+	}
 	int startTabs = 0;
 	for (int x = 0; x < file.getLine(lineY).length(); x++)
 	{
@@ -681,6 +770,32 @@ Returns:
 		}
 		file.addStr(lineY, text);
 	}
+	if (state != "ctrlv")
+	{
+		stack.updateStack(file.getLines(), lineX, lineY);
+	}
+}
+
+void Editor::ctrlS(CommandLine &cmd)
+/**
+Saves the file
+
+Args:
+	(CommandLine&) cmd: CommandLine Object
+
+Returns:
+	void
+ */
+
+{
+	if (file.save())
+	{
+		cmd.displayInfo("Changes Saved.");
+	}
+	else
+	{
+		cmd.displayError("Couldn't Save Changes. ( Try saveas {file} )");
+	}
 }
 
 void Editor::ctrlA()
@@ -736,6 +851,12 @@ void Editor::ctrlC()
 
 void Editor::ctrlV()
 {
+	if (state != "ctrlv")
+	{
+		state = "ctrlv";
+		stack.addToStack(file.getLines(), lineX, lineY);
+		stack.truncateStack();
+	}
 	FILE *pipe = popen("xclip -selection clipboard -o", "r");
 	if (pipe)
 	{
@@ -767,6 +888,8 @@ void Editor::ctrlV()
 		}
 		autoComplete = save;
 	}
+	stack.updateStack(file.getLines(), lineX, lineY);
+	state = "";
 }
 
 void Editor::ctrlX()
@@ -778,6 +901,12 @@ Returns:
  */
 
 {
+	if (state != "ctrlx")
+	{
+		state = "ctrlx";
+		stack.addToStack(file.getLines(), lineX, lineY);
+		stack.truncateStack();
+	}
 	const string str = file.getLine(lineY);
 	FILE *pipe = popen("xclip -selection clipboard", "w");
 	if (pipe)
@@ -802,28 +931,51 @@ Returns:
 			cursorY = getWrappedCursorY(lineY, lineX);
 		}
 	}
+	stack.updateStack(file.getLines(), lineX, lineY);
 }
 
-void Editor::ctrlS(CommandLine &cmd)
+void Editor::ctrlY()
 /**
-Saves the file
-
-Args:
-	(CommandLine&) cmd: CommandLine Object
+Function that redoes
 
 Returns:
 	void
  */
 
 {
-	if (file.save())
+	if (state != "ctrly")
 	{
-		cmd.displayInfo("Changes Saved.");
+		state = "ctrly";
 	}
-	else
+	endHightlight();
+	stack.redo();
+	file.setLines(stack.getText());
+	lineX = stack.getLineX();
+	lineY = stack.getLineY();
+	cursorX = getWrappedX(lineX);
+	cursorY = getWrappedCursorY(lineY, lineX);
+}
+
+void Editor::ctrlZ()
+/**
+Function that undos
+
+Returns:
+	void
+ */
+
+{
+	if (state != "ctrlz")
 	{
-		cmd.displayError("Couldn't Save Changes. ( Try saveas {file} )");
+		state = "ctrlz";
 	}
+	endHightlight();
+	stack.undo();
+	file.setLines(stack.getText());
+	lineX = stack.getLineX();
+	lineY = stack.getLineY();
+	cursorX = getWrappedX(lineX);
+	cursorY = getWrappedCursorY(lineY, lineX);
 }
 
 void Editor::goToMouse()
@@ -958,6 +1110,7 @@ Returns:
 		{
 			scroll -= getWrappedY(file.getLine(lineY).length() - 1);
 		}
+		stack.updateCursorStack(lineX, lineY);
 	}
 }
 
@@ -999,6 +1152,7 @@ Returns:
 			scroll++;
 		}
 	}
+	stack.updateCursorStack(lineX, lineY);
 }
 
 void Editor::leftArrow()
@@ -1020,13 +1174,18 @@ Returns:
 		}
 
 		lineX -= sub;
-		cursorX = getWrappedX(lineX);
-		cursorY = getWrappedCursorY(lineY, lineX);
 	}
 	else
 	{
-		upArrow();
+		if (lineY != 0)
+		{
+			lineX = file.getLine(lineY - 1).length();
+			lineY--;
+		}
 	}
+	cursorX = getWrappedX(lineX);
+	cursorY = getWrappedCursorY(lineY, lineX);
+	stack.updateCursorStack(lineX, lineY);
 }
 
 void Editor::rightArrow()
@@ -1048,13 +1207,18 @@ Returns:
 		}
 
 		lineX += add;
-		cursorX = getWrappedX(lineX);
-		cursorY = getWrappedCursorY(lineY, lineX);
 	}
 	else
 	{
-		downArrow();
+		if (lineY != file.getLines().size() - 1)
+		{
+			lineX = 0;
+			lineY++;
+		}
 	}
+	cursorX = getWrappedX(lineX);
+	cursorY = getWrappedCursorY(lineY, lineX);
+	stack.updateCursorStack(lineX, lineY);
 }
 
 void Editor::highlight()
@@ -1137,7 +1301,6 @@ void Editor::printLine(bool end, string copiedLine, int lineNum, int &tempY, int
 
 void Editor::printLineByChar(string copiedLine, int lineNum, int &tempY, int &endX)
 {
-	init_pair(1, COLOR_WHITE, COLOR_WHITE);
 	int printX = 0;
 	for (int x = 0; x < copiedLine.length(); x++)
 	{
@@ -1188,7 +1351,8 @@ Returns:
  */
 
 {
-	if ((lineNums && int(log10(lineY) + 1) >= 2 && lineNumbersWidth - 2 != int(log10(lineY) + 1)) || getWrappedCursorY(file.getLines().size() - 1, file.getLine(file.getLines().size() - 1).length()) + height >= maxHeight)
+	int strSize = to_string(file.getLines().size() - 1).length();
+	if (lineNums && strSize >= 2 && lineNumbersWidth - 2 != strSize || getWrappedCursorY(file.getLines().size() - 1, file.getLine(file.getLines().size() - 1).length()) + height >= maxHeight)
 	{
 		if (getWrappedCursorY(file.getLines().size() - 1, file.getLine(file.getLines().size() - 1).length()) + height >= maxHeight)
 		{
@@ -1209,7 +1373,6 @@ Returns:
 	wmove(textPad, 0, 0);
 	wmove(linesPad, 0, 0);
 
-	init_pair(1, COLOR_WHITE, COLOR_WHITE);
 	for (const string &line : file.getLines())
 	{
 		lineNum++;
@@ -1222,7 +1385,9 @@ Returns:
 				nums = nums.append(" ");
 			}
 			nums += to_string(lineNum);
+			wattron(linesPad, COLOR_PAIR(2));
 			mvwprintw(linesPad, tempY, 0, nums.c_str());
+			wattroff(linesPad, COLOR_PAIR(2));
 		}
 		else
 		{
@@ -1231,7 +1396,9 @@ Returns:
 				nums = nums.append(" ");
 			}
 			nums += "~";
+			wattron(linesPad, COLOR_PAIR(2));
 			mvwprintw(linesPad, tempY, 0, nums.c_str());
+			wattroff(linesPad, COLOR_PAIR(2));
 		}
 
 		string copiedLine = file.replaceAll(line, "\t", tabSpaces); // Replaces the tabspaces
@@ -1241,6 +1408,10 @@ Returns:
 			if (lineNum - 1 > orderHighlight()[0].second && lineNum - 1 < orderHighlight()[1].second)
 			{
 				wattron(textPad, COLOR_PAIR(1));
+				if (copiedLine.length() == 0)
+				{
+					mvwprintw(textPad, tempY, 0, " ");
+				}
 				printLine(end, copiedLine, lineNum, tempY, endX);
 				wattroff(textPad, COLOR_PAIR(1));
 			}
@@ -1284,7 +1455,6 @@ Returns:
 		mvwprintw(linesPad, n, 0, nums.c_str());
 	}
 
-	wattroff(textPad, COLOR_PAIR(1));
 	prefresh(linesPad, scroll, 0, 0, 0, height - 2, lineNumbersWidth);
 	prefresh(textPad, scroll, 0, 0, lineNumbersWidth, height - 2, width + (lineNumbersWidth - 1));
 

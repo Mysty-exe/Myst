@@ -140,6 +140,21 @@ Returns:
     return lines;
 }
 
+void File::setLines(vector<string> l)
+/**
+Lines Setter Function
+
+Args:
+    (vector<string>) l: Lines to replace
+
+Returns:
+    void
+ */
+
+{
+    lines = l;
+}
+
 void File::printLines()
 /**
 Prints each line out

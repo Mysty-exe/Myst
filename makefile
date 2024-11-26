@@ -5,7 +5,7 @@ CXXFLAGS = -std=c++17 -Iinclude -Ilib -Wall -Wextra -O2
 TARGET = build/myst.exe
 
 # Source files
-SRC_FILES = src/main.cpp src/editor.cpp src/cmd.cpp src/file.cpp lib/ini.c
+SRC_FILES = src/main.cpp src/editor.cpp src/cmd.cpp src/history.cpp src/file.cpp lib/ini.c
 
 all: build_dir $(TARGET)
 

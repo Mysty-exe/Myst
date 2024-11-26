@@ -19,12 +19,12 @@ Returns:
  */
 
 {
-    width, height = w, h;
+    width = w;
+    height = h;
     cursorX = cursorY = 0;
     cmdTxt = "";
     line = "";
     commandWindow = newwin(1, width, height - 1, 0);
-    getmaxyx(commandWindow, height, width);
 }
 
 int CommandLine::getWidth()
@@ -223,14 +223,13 @@ Returns:
  */
 
 {
-    init_pair(1, COLOR_GREEN, -1);
     line = text;
     cmdTxt = "";
     cursorX = 0;
 
-    wattron(commandWindow, COLOR_PAIR(1));
+    wattron(commandWindow, COLOR_PAIR(3));
     mvwprintw(commandWindow, 0, 0, text.c_str());
-    wattroff(commandWindow, COLOR_PAIR(1));
+    wattroff(commandWindow, COLOR_PAIR(3));
 
     wrefresh(commandWindow);
 }
@@ -247,14 +246,13 @@ Returns:
  */
 
 {
-    init_pair(1, COLOR_RED, -1);
     line = text;
     cmdTxt = "";
     cursorX = 0;
 
-    wattron(commandWindow, COLOR_PAIR(1));
+    wattron(commandWindow, COLOR_PAIR(4));
     mvwprintw(commandWindow, 0, 0, text.c_str());
-    wattroff(commandWindow, COLOR_PAIR(1));
+    wattroff(commandWindow, COLOR_PAIR(4));
 
     wrefresh(commandWindow);
 }

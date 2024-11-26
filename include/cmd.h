@@ -17,8 +17,9 @@ private:
     int cursorX, cursorY;
 
 public:
-    CommandLine(int w, int h);
     WINDOW *commandWindow;
+
+    CommandLine(int w, int h);
     int getWidth();
     void setWidth(int w);
     int getCursorX();

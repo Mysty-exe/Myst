@@ -117,12 +117,18 @@ Returns:
     curs_set(0);
 
     string text;
-    int tempY = (h / 2) - (17 / 2);
+    int tempY = (h / 2) - (16 / 2);
 
     fstream readFile("resources/logo.txt");
     while (getline(readFile, text))
     {
+        if (tempY - ((h / 2) - (16 / 2)) < 13)
+        {
+            wattron(stdscr, COLOR_PAIR(2));
+        }
         mvprintw(tempY, (w / 2) - (text.length() / 2), text.c_str());
+        wattroff(stdscr, COLOR_PAIR(2));
+
         tempY++;
     }
 
@@ -207,6 +213,18 @@ Returns:
 
     case (88 & 0x1F):
         editor.ctrlX();
+        editor.goToMouse();
+        cmd.clear();
+        break;
+
+    case (89 & 0x1F):
+        editor.ctrlY();
+        editor.goToMouse();
+        cmd.clear();
+        break;
+
+    case (90 & 0x1F):
+        editor.ctrlZ();
         editor.goToMouse();
         cmd.clear();
         break;
@@ -424,7 +442,7 @@ Returns:
     if (mode == 1)
     {
         cmd.clearCmd();
-        prefresh(editor.textPad, editor.getScroll(), 0, 0, 0, editor.getHeight(), editor.getWidth());
+        prefresh(editor.textPad, editor.getScroll(), 0, 0, editor.getNumbersWidth(), editor.getHeight() - 2, editor.getWidth() + (editor.getNumbersWidth() - 1));
     }
 
     return mode;
@@ -447,11 +465,13 @@ Returns:
 
 {
     File file = File();
+    HistoryStack stack = HistoryStack();
 
     file.open(fileName);
     editor.setFile(file);
+    editor.setStack(stack);
 
-    editor.writeToScreen(false);
+    editor.writeToScreen(true);
 
     // Loop till ESC button is pressed
     while (true)
@@ -481,13 +501,17 @@ int main(int argc, char **argv)
     int w, h;
     getmaxyx(stdscr, h, w);
 
-    mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
     noecho();
     cbreak();
     raw();
+    mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
 
     use_default_colors();
     start_color();
+    init_pair(1, COLOR_WHITE, COLOR_BLUE);
+    init_pair(2, COLOR_BLUE, -1);
+    init_pair(3, COLOR_GREEN, -1);
+    init_pair(4, COLOR_RED, -1);
 
     Editor editor(w, h);
     CommandLine cmd(w, h);
@@ -531,7 +555,6 @@ int main(int argc, char **argv)
                 getch();
             }
 
-            curs_set(1);
             openFile(settings, editor, cmd, file, mode);
         }
     }

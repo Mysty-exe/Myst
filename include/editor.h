@@ -8,6 +8,7 @@
 #include <math.h>
 #include "cmd.h"
 #include "file.h"
+#include "history.h"
 
 using namespace std;
 
@@ -19,6 +20,7 @@ class Editor
 {
 private:
     File file;
+    HistoryStack stack;
 
     int maxHeight;
     int width, height;
@@ -33,6 +35,7 @@ private:
     vector<pair<int, int>> selectedText;
     vector<char> specialCharacters;
     vector<char> otherCharacters;
+    string state;
 
 public:
     WINDOW *textPad;
@@ -43,7 +46,9 @@ public:
 
     File getFile();
     void setFile(File f);
+    void setStack(HistoryStack s);
     void setSettings(int tab, bool line, bool autocomp);
+    bool checkSpecialChar(char character);
 
     int getCursorX();
     int getCursorY();
@@ -51,6 +56,7 @@ public:
     void setWidth(int w);
     int getHeight();
     void setHeight(int h);
+    int getNumbersWidth();
     int getScroll();
 
     int getTab();
@@ -70,11 +76,13 @@ public:
     void backspace();
     void tab();
     void enter();
+    void ctrlS(CommandLine &cmd);
     void ctrlA();
     void ctrlC();
     void ctrlV();
     void ctrlX();
-    void ctrlS(CommandLine &cmd);
+    void ctrlY();
+    void ctrlZ();
 
     void goToMouse();
     void scrollUp();

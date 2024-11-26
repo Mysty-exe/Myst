@@ -24,6 +24,7 @@ public:
     bool save();
     void setTabSize(string tab);
     vector<string> getLines();
+    void setLines(vector<string> lines);
     void printLines();
     int getLineLength(int lineNum);
     string getLine(int lineNum);
