@@ -3,12 +3,14 @@
 #include <cstdio>
 #include <filesystem>
 #include <algorithm>
+#include <format>
 #include <curses.h>
 #include <vector>
 #include <math.h>
-#include "cmd.h"
+#include "status.h"
 #include "file.h"
 #include "history.h"
+#include "settings.h"
 
 using namespace std;
 
@@ -37,18 +39,29 @@ private:
     vector<char> otherCharacters;
     string state;
 
+    int copiedLines;
+    int pastedLines;
+
+    bool highlighting;
+    bool cursorVisible;
+    string lastSaved;
+
 public:
     WINDOW *textPad;
     WINDOW *linesPad;
-    bool highlighting;
 
+    Editor();
     Editor(int w, int h);
 
     File getFile();
+    void resetEditor();
     void setFile(File f);
+    void previousFile();
+    void nextFile();
     void setStack(HistoryStack s);
-    void setSettings(int tab, bool line, bool autocomp);
+    void setSettings(Settings &settings);
     bool checkSpecialChar(char character);
+    bool checkOtherChar(char character);
 
     int getCursorX();
     int getCursorY();
@@ -67,6 +80,9 @@ public:
     bool getAutoComplete();
     void toggleLineNums();
     void toggleAutoComplete();
+    bool getHighlighting();
+    bool getCursorVisible();
+    string getLastSaved();
 
     void updateDimensions();
 
@@ -74,11 +90,13 @@ public:
     void addCharacter(char character);
     void insertCharacter(char character);
     void backspace();
+    void deleteLine();
     void tab();
     void enter();
-    void ctrlS(CommandLine &cmd);
+    void ctrlS(StatusBar &status);
     void ctrlA();
     void ctrlC();
+    void ctrlF();
     void ctrlV();
     void ctrlX();
     void ctrlY();
@@ -101,13 +119,16 @@ public:
     vector<pair<int, int>> orderHighlight();
     void deleteHighlighted();
 
-    void printLine(bool end, string copiedLine, int lineNum, int &tempY, int &endX);
-    void printLineByChar(string copiedLine, int lineNum, int &tempY, int &endX);
-    void writeToScreen(bool end);
+    int find(string text);
+    void replaceAllInstances(string from, string to);
+    void printLine(string copiedLine, int &tempY);
+    void printLineByChar(string copiedLine, int lineNum, int &tempY);
+    void findPrintLineByChar(string copiedLine, string findTxt, int &tempY);
+    void updateStatus(StatusBar &status);
+    void writeToScreen(StatusBar &status);
 
     int getWrappedX(int x);
     int getWrappedY(int x);
     int getWrappedCursorY(int y, int x);
     int getTabX(int x);
-    int enactCommand(CommandLine &cmd, vector<string> command);
 };

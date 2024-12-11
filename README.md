@@ -1,2 +1,2 @@
-# Myst
-A terminal based text editor built in C++
+# Myst Editor
+A terminal based text editor built in C++

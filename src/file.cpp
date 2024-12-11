@@ -1,9 +1,5 @@
 #pragma once
-#include <iostream>
-#include <vector>
 #include "file.h"
-
-using namespace std;
 
 File::File()
 /**
@@ -18,8 +14,99 @@ Returns:
  */
 
 {
-    name = "";
+    fileName = "";
+    absoluteFile = "";
+    files = {};
     lines = {};
+}
+
+bool File::unsavedFile()
+/**
+Checks if file has been saved or not
+
+Returns:
+    bool
+ */
+
+{
+    string text;
+    int lineNum = 0;
+    fstream readFile(absoluteFile);
+    if (readFile.fail())
+    {
+        return true;
+    }
+    while (getline(readFile, text))
+    {
+        if ((int)lines.size() > lineNum)
+        {
+            if (text != getLine(lineNum))
+            {
+                return true;
+            }
+        }
+        else
+        {
+            return true;
+        }
+        lineNum += 1;
+    }
+    return false;
+}
+
+bool File::overwrite(string fileName)
+/**
+Checks if file already exists
+
+Args:
+    (string) fileName: Name of the file
+Returns:
+    bool
+ */
+
+{
+    string absoluteFile = filesystem::absolute(fileName);
+    fstream readFile(absoluteFile);
+    if (readFile.fail())
+    {
+        return false;
+    }
+    return true;
+}
+
+bool File::fileError(string filePath)
+/**
+Checks if file is valid
+
+Args:
+    (string) file: Name of the file
+
+Returns:
+    bool
+ */
+
+{
+    filesystem::path dir = filesystem::path(filePath).parent_path();
+    if (dir.empty())
+    {
+        dir = std::filesystem::current_path();
+    }
+
+    error_code ec;
+    if (!filesystem::exists(dir) || !filesystem::is_directory(dir, ec))
+    {
+        cout << "Directory does not exist: " << dir << endl;
+        return true;
+    }
+
+    auto perms = filesystem::status(dir).permissions();
+    if ((perms & filesystem::perms::owner_write) == filesystem::perms::none)
+    {
+        cout << "Directory is not writable: " << dir << endl;
+        return false;
+    }
+
+    return false;
 }
 
 void File::open(string n)
@@ -36,21 +123,33 @@ Returns:
 {
     setName(n);
 
-    lines = {};
     int lineNum = 0;
     string text;
-    fstream readFile(name);
+    fstream readFile(absoluteFile);
+    lines = {};
     if (readFile.fail())
     {
         insertLine(0, "");
     }
     else
     {
+        lines = {};
         while (getline(readFile, text))
         {
+            for (int x = text.length(); x != -1; x--)
+            {
+                if (text[x] == '\r' || text[x] == '\n')
+                {
+                    text = text.substr(0, text.length() - 1);
+                }
+            }
             insertLine(lineNum, text);
             lineNum++;
         }
+    }
+    if (lines.size() == 0)
+    {
+        insertLine(0, "");
     }
 
     readFile.close();
@@ -65,7 +164,7 @@ Returns:
  */
 
 {
-    fstream writeFile(name, ios::out | ios::trunc);
+    fstream writeFile(absoluteFile, ios::out | ios::trunc);
     if (writeFile.fail())
     {
         return false;
@@ -110,7 +209,19 @@ Returns:
  */
 
 {
-    return name;
+    return fileName;
+}
+
+string File::getDirectory()
+/**
+Directory Getter Function
+
+Returns:
+    string
+ */
+
+{
+    return absoluteFile;
 }
 
 void File::setName(string n)
@@ -125,7 +236,42 @@ Returns:
  */
 
 {
-    name = n;
+    fileName = n;
+    if (fileName == "")
+    {
+        absoluteFile = filesystem::current_path();
+    }
+    else
+    {
+        absoluteFile = filesystem::absolute(fileName);
+        if (fileName.find('/') != string::npos)
+        {
+            fileName = fileName.substr(fileName.find_last_of("/") + 1, fileName.length() - fileName.find_last_of("/"));
+        }
+    }
+
+    getFilesInDirectory();
+}
+
+void File::getFilesInDirectory()
+/**
+Gets all the files in a directory and puts it into a vector
+
+Returns:
+    void
+ */
+
+{
+    files = {};
+    error_code ec;
+    for (auto &p : filesystem::directory_iterator(filesystem::path(absoluteFile).parent_path()))
+    {
+        if (filesystem::is_regular_file(p.path(), ec))
+        {
+
+            files.push_back(p.path());
+        }
+    }
 }
 
 vector<string> File::getLines()
@@ -138,6 +284,18 @@ Returns:
 
 {
     return lines;
+}
+
+vector<string> File::getFiles()
+/**
+Files Getter Function
+
+Returns:
+    vector<string>
+ */
+
+{
+    return files;
 }
 
 void File::setLines(vector<string> l)
@@ -231,9 +389,9 @@ Returns:
 {
     vector<int> tabs = {};
     int value = 0;
-    for (int x = 0; x < getLine(lineNum).length(); x++)
+    for (int x = 0; x < (int)getLine(lineNum).length(); x++)
     {
-        if (getLine(lineNum)[value] == '\t')
+        if (getLine(lineNum)[x] == '\t')
         {
             value += tabSize;
             tabs.push_back(value);

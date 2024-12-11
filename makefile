@@ -1,11 +1,11 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Iinclude -Ilib -Wall -Wextra -O2
+CXXFLAGS = -std=c++20 -Iinclude -Ilib -Wall -Wextra -O2
 
 # Target executable name
 TARGET = build/myst.exe
 
 # Source files
-SRC_FILES = src/main.cpp src/editor.cpp src/cmd.cpp src/history.cpp src/file.cpp lib/ini.c
+SRC_FILES = src/main.cpp src/app.cpp src/editor.cpp src/status.cpp src/history.cpp src/file.cpp src/menu.cpp src/buttons.cpp src/settings.cpp lib/ini.c
 
 all: build_dir $(TARGET)
 

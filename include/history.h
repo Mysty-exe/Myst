@@ -17,6 +17,9 @@ private:
 
 public:
     HistoryStack();
+    
+    int getQueueNum();
+    int getStackSize();
     void addToStack(vector<string> text, int lineX, int lineY);
     void updateStack(vector<string> text, int lineX, int lineY);
     void truncateStack();
@@ -26,4 +29,5 @@ public:
     vector<string> getText();
     int getLineX();
     int getLineY();
+    void clear();
 };

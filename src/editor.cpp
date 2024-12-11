@@ -1,20 +1,40 @@
 #pragma once
 #include "editor.h"
 
+Editor::Editor()
+/**
+Editor Class Constructor
+
+Returns:
+	void
+ */
+
+{
+}
+
 Editor::Editor(int w, int h)
 /**
 Editor Class Constructor
 
 Vars:
+	(int) maxHeight: Max Height of the editor
 	(int) width: width of the editor
 	(int) height: height of the editor
+	(int) lineNumbersWidth: width of the line numbers pad
 	(int) cursorX: index that the cursor is on (regards wrapping)
 	(int) cursorY: current line that the cursor is on (regards wrapping)
 	(int) lineX: index that the cursor is on (disregards wrapping)
 	(int) lineY: current line that the cursor is on (disregards wrapping)
 	(int) scroll: How scrolled the text editor is
+	(bool) cursorVisible: Check if cursor is visible
 	(bool) highlighting: Whether something is being highlighting
+	(vector<char>) specialCharacters: Array of special characters
+	(vector<char>) otherCharacters: Array of other side of special characters
 	(vector<pair<int, int>>) selectedText: Indexes of text that is being highlighted
+	(string) state: Current state of editor
+	(string) lastSaved: Last time file was saved
+	(int) copiedLines: Check how many lines are being copied
+	(int) pasgedLines: Check how many lines are being pasted
 	(WINDOW*) textPad: Pad for the editor
 	(WINDOW*) linesPad: Pad for the lines
 
@@ -26,10 +46,12 @@ Returns:
 	maxHeight = 1000;
 	width = w;
 	height = h;
+	height -= 1;
 	lineNumbersWidth = 4;
 	cursorX = cursorY = 0;
 	lineX = lineY = 0;
 	scroll = 0;
+	cursorVisible = true;
 
 	highlighting = false;
 	selectedText = {};
@@ -43,6 +65,41 @@ Returns:
 	linesPad = newpad(maxHeight, lineNumbersWidth);
 	width -= lineNumbersWidth;
 	state = "";
+	lastSaved = "";
+
+	copiedLines = 0;
+	pastedLines = 0;
+}
+
+void Editor::resetEditor()
+/**
+Resets editor
+
+Returns:
+	void
+ */
+
+{
+	maxHeight = 1000;
+	lineNumbersWidth = 4;
+	cursorX = 0;
+	cursorY = 0;
+	lineX = 0;
+	lineY = 0;
+	scroll = 0;
+	updateDimensions();
+	cursorVisible = true;
+
+	highlighting = false;
+	selectedText = {};
+	selectedText.push_back(make_pair(0, 0));
+	selectedText.push_back(make_pair(0, 0));
+
+	state = "";
+	lastSaved = "";
+
+	copiedLines = 0;
+	pastedLines = 0;
 }
 
 File Editor::getFile()
@@ -73,6 +130,78 @@ Returns:
 	file.setTabSize(tabSpaces);
 }
 
+void Editor::previousFile()
+/**
+Changes file to "previous" file in the directory
+
+Args:
+	(File) f: File object
+
+Returns:
+	void
+ */
+
+{
+	for (int x = 0; x < (int)file.getFiles().size(); x++)
+	{
+		if (file.getFiles()[x] == file.getDirectory())
+		{
+			if (x == 0)
+			{
+				file.open(file.getFiles()[file.getFiles().size() - 1]);
+			}
+			else
+			{
+				file.open(file.getFiles()[x - 1]);
+			}
+			break;
+		}
+	}
+	if (file.getName() != "")
+	{
+		setFile(file);
+		resetEditor();
+		stack.clear();
+		setStack(stack);
+	}
+}
+
+void Editor::nextFile()
+/**
+Changes file to "next" file in the directory
+
+Args:
+	(File) f: File object
+
+Returns:
+	void
+ */
+
+{
+	for (int x = 0; x < (int)file.getFiles().size(); x++)
+	{
+		if (file.getFiles()[x] == file.getDirectory())
+		{
+			if (x == (int)file.getFiles().size() - 1)
+			{
+				file.open(file.getFiles()[0]);
+			}
+			else
+			{
+				file.open(file.getFiles()[x + 1]);
+			}
+			break;
+		}
+	}
+	if (file.getName() != "")
+	{
+		setFile(file);
+		resetEditor();
+		stack.clear();
+		setStack(stack);
+	}
+}
+
 void Editor::setStack(HistoryStack s)
 /**
 Stack Setter Function
@@ -90,7 +219,7 @@ Returns:
 	stack.truncateStack();
 }
 
-void Editor::setSettings(int tab, bool line, bool autocomp)
+void Editor::setSettings(Settings &settings)
 /**
 Update the editor settings with arguments
 
@@ -104,9 +233,9 @@ Returns:
  */
 
 {
-	tabSize = tab;
-	lineNums = line;
-	autoComplete = autocomp;
+	tabSize = stoi(settings.getTabSize());
+	lineNums = settings.getLineNumbers() == "On" ? true : false;
+	autoComplete = settings.getProgrammingMode() == "On" ? true : false;
 	tabSpaces = setTab();
 	file.setTabSize(tabSpaces);
 }
@@ -123,6 +252,21 @@ Returns:
 
 {
 	return any_of(begin(specialCharacters), end(specialCharacters), [=](char n)
+				  { return n == character; });
+}
+
+bool Editor::checkOtherChar(char character)
+/**
+Check if character is a special character
+
+Args:
+	(char) character: character inputted
+Returns:
+	void
+ */
+
+{
+	return any_of(begin(otherCharacters), end(otherCharacters), [=](char n)
 				  { return n == character; });
 }
 
@@ -322,6 +466,42 @@ Returns:
 	lineNums = not lineNums;
 }
 
+bool Editor::getHighlighting()
+/**
+Highlighting Getter Function
+
+Returns:
+	bool
+ */
+
+{
+	return highlighting;
+}
+
+bool Editor::getCursorVisible()
+/**
+cursorVisible Getter Function
+
+Returns:
+	bool
+ */
+
+{
+	return cursorVisible;
+}
+
+string Editor::getLastSaved()
+/**
+lastSaved Getter Function
+
+Returns:
+	string
+ */
+
+{
+	return lastSaved;
+}
+
 void Editor::updateDimensions()
 /**
 Update size of editor and linenums if terminal size has been changed
@@ -334,23 +514,22 @@ Returns:
 	delwin(textPad);
 	delwin(linesPad);
 	getmaxyx(stdscr, height, width);
+	height -= 1;
 
-	if (int(log10(lineY) + 1) >= 2)
-	{
-		lineNumbersWidth = int(log10(lineY) + 1) + 2;
-	}
+	lineNumbersWidth = to_string(file.getLines().size()).length() + 3;
 
 	textPad = newpad(maxHeight, width - lineNumbersWidth);
 	linesPad = newpad(maxHeight, lineNumbersWidth);
 	keypad(textPad, true);
+	nodelay(textPad, true);
 
 	width -= lineNumbersWidth;
 	cursorX = getWrappedX(lineX);
 	cursorY = getWrappedCursorY(lineY, lineX);
 	goToMouse();
 
-	prefresh(linesPad, scroll, 0, 0, 0, height - 2, lineNumbersWidth);
-	prefresh(textPad, scroll, 0, 0, lineNumbersWidth, height - 2, width + (lineNumbersWidth - 1));
+	prefresh(linesPad, scroll, 0, 0, 0, height - 3, lineNumbersWidth);
+	prefresh(textPad, scroll, 0, 0, lineNumbersWidth, height - 3, width + (lineNumbersWidth - 1));
 }
 
 bool Editor::endOfLine()
@@ -377,6 +556,12 @@ Returns:
  */
 
 {
+	copiedLines = 0;
+	if (state != "ctrlv")
+	{
+		pastedLines = 0;
+	}
+
 	if (state != "add" && state != "ctrlv")
 	{
 		state = "add";
@@ -405,7 +590,7 @@ Returns:
 	lineX++;
 	if (autoComplete)
 	{
-		for (int i = 0; i < specialCharacters.size(); i++)
+		for (int i = 0; i < (int)specialCharacters.size(); i++)
 		{
 			if (character == specialCharacters[i])
 			{
@@ -471,21 +656,34 @@ Returns:
  */
 
 {
+	copiedLines = 0;
+	pastedLines = 0;
+
 	if (state != "insert")
 	{
 		state = "insert";
 		stack.addToStack(file.getLines(), lineX, lineY);
 		stack.truncateStack();
 	}
-	if ((!autoComplete || !checkSpecialChar(character) || !highlighting))
+
+	if (highlighting)
 	{
 		deleteHighlighted();
 		endHightlight();
-		if (!checkSpecialChar(character) || !autoComplete || !(file.getLineWTabs(lineY)[lineX] == character) || highlighting)
-		{
-			file.insertChar(lineY, getTabX(lineX), character);
-		}
 	}
+
+	if (checkSpecialChar(file.getLineWTabs(lineY)[lineX - 1]) && checkOtherChar(file.getLineWTabs(lineY)[lineX]) && checkSpecialChar(character) && autoComplete)
+	{
+		auto it = std::find(specialCharacters.begin(), specialCharacters.end(), character);
+		file.insertChar(lineY, getTabX(lineX), character);
+		file.insertChar(lineY, getTabX(lineX + 1), otherCharacters[it - specialCharacters.begin()]);
+	}
+
+	else if (!checkOtherChar(character) || !autoComplete || !(file.getLineWTabs(lineY)[lineX] == character))
+	{
+		file.insertChar(lineY, getTabX(lineX), character);
+	}
+
 	lineX++;
 	if (cursorX < width - 1) // Check if cursor is at the end of a line
 	{
@@ -502,7 +700,7 @@ Returns:
 	}
 	if (autoComplete)
 	{
-		for (int i = 0; i < specialCharacters.size(); i++)
+		for (int i = 0; i < (int)specialCharacters.size(); i++)
 		{
 			if (character == specialCharacters[i])
 			{
@@ -560,6 +758,9 @@ Returns:
  */
 
 {
+	copiedLines = 0;
+	pastedLines = 0;
+
 	if (cursorY != 0 || cursorX != 0)
 	{
 		if (endOfLine())
@@ -623,6 +824,33 @@ Returns:
 	stack.updateStack(file.getLines(), lineX, lineY);
 }
 
+void Editor::deleteLine()
+/**
+Deletes current line and moves cursor up
+
+Returns:
+	void
+ */
+
+{
+	if (lineY == 0)
+	{
+		file.setLine(lineY, "");
+		lineY = 0;
+		lineX = 0;
+		cursorX = 0;
+		cursorY = getWrappedCursorY(lineY, lineX);
+	}
+	else
+	{
+		file.delLine(lineY);
+		lineY -= 1;
+		lineX = file.getLineLength(lineY);
+		cursorX = getWrappedX(lineX);
+		cursorY = getWrappedCursorY(lineY, lineX);
+	}
+}
+
 void Editor::tab()
 /**
 Replicates an actual tab based on the size of the current tabspace
@@ -632,6 +860,12 @@ Returns:
  */
 
 {
+	copiedLines = 0;
+	if (state != "ctrlv")
+	{
+		pastedLines = 0;
+	}
+
 	if (state != "tab" && state != "ctrlv")
 	{
 		state = "tab";
@@ -698,6 +932,12 @@ Returns:
  */
 
 {
+	copiedLines = 0;
+	if (state != "ctrlv")
+	{
+		pastedLines = 0;
+	}
+
 	if (state != "enter" and state != "ctrlv")
 	{
 		state = "enter";
@@ -705,7 +945,7 @@ Returns:
 		stack.truncateStack();
 	}
 	int startTabs = 0;
-	for (int x = 0; x < file.getLine(lineY).length(); x++)
+	for (int x = 0; x < (int)file.getLine(lineY).length(); x++)
 	{
 		if (file.getLine(lineY)[x] == '\t')
 		{
@@ -776,30 +1016,38 @@ Returns:
 	}
 }
 
-void Editor::ctrlS(CommandLine &cmd)
+void Editor::ctrlS(StatusBar &status)
 /**
 Saves the file
 
 Args:
-	(CommandLine&) cmd: CommandLine Object
+	(StatusBar&) status: StatusBar Object
 
 Returns:
 	void
  */
 
 {
+	state = "ctrls";
+	copiedLines = 0;
+	pastedLines = 0;
+
 	if (file.save())
 	{
-		cmd.displayInfo("Changes Saved.");
+		status.setInfo("Changes Saved.", false);
+		lastSaved = status.getDateString();
 	}
 	else
 	{
-		cmd.displayError("Couldn't Save Changes. ( Try saveas {file} )");
+		status.setInfo("Couldn't Save Changes.", true);
 	}
 }
 
 void Editor::ctrlA()
 {
+	copiedLines = 0;
+	pastedLines = 0;
+
 	highlighting = true;
 	selectedText[0].first = 0;
 	selectedText[0].second = 0;
@@ -809,6 +1057,7 @@ void Editor::ctrlA()
 
 void Editor::ctrlC()
 {
+	pastedLines = 0;
 	FILE *pipe = popen("xclip -selection clipboard", "w");
 	if (pipe)
 	{
@@ -816,9 +1065,11 @@ void Editor::ctrlC()
 		if (!highlighting)
 		{
 			str = file.getLine(lineY);
+			copiedLines = 1;
 		}
 		else
 		{
+			copiedLines = (orderHighlight()[1].second - orderHighlight()[0].second) + 1;
 			if (selectedText[0].second == selectedText[1].second)
 			{
 				str = file.getLine(lineY).substr(orderHighlight()[0].first, orderHighlight()[1].first - orderHighlight()[0].first);
@@ -850,7 +1101,16 @@ void Editor::ctrlC()
 }
 
 void Editor::ctrlV()
+/**
+Pastes text from clipboard
+
+Returns:
+	void
+ */
+
 {
+	copiedLines = 0;
+	pastedLines = 1;
 	if (state != "ctrlv")
 	{
 		state = "ctrlv";
@@ -871,10 +1131,11 @@ void Editor::ctrlV()
 
 		bool save = autoComplete;
 		autoComplete = false;
-		for (int x = 0; x < result.length(); x++)
+		for (int x = 0; x < (int)result.length(); x++)
 		{
 			if (result[x] == '\n')
 			{
+				pastedLines += 1;
 				enter();
 			}
 			else if (result[x] == '\t')
@@ -901,6 +1162,8 @@ Returns:
  */
 
 {
+	copiedLines = 1;
+	pastedLines = 0;
 	if (state != "ctrlx")
 	{
 		state = "ctrlx";
@@ -914,22 +1177,7 @@ Returns:
 		// Write the text to the pipe
 		fwrite(str.c_str(), sizeof(char), str.size(), pipe);
 		pclose(pipe);
-		if (file.getLines().size() > 1)
-		{
-			file.delLine(lineY);
-			cursorY -= getWrappedY(lineX) - 1;
-		}
-		else
-		{
-			file.setLine(lineY, "");
-		}
-		lineX = 0;
-		cursorX = getWrappedX(lineX);
-		if (lineY == file.getLines().size() && file.getLines().size() > 0)
-		{
-			lineY -= 1;
-			cursorY = getWrappedCursorY(lineY, lineX);
-		}
+		deleteLine();
 	}
 	stack.updateStack(file.getLines(), lineX, lineY);
 }
@@ -943,6 +1191,9 @@ Returns:
  */
 
 {
+	copiedLines = 0;
+	pastedLines = 0;
+
 	if (state != "ctrly")
 	{
 		state = "ctrly";
@@ -965,6 +1216,9 @@ Returns:
  */
 
 {
+	copiedLines = 0;
+	pastedLines = 0;
+
 	if (state != "ctrlz")
 	{
 		state = "ctrlz";
@@ -979,6 +1233,13 @@ Returns:
 }
 
 void Editor::goToMouse()
+/**
+Goes to the mouse if its not on the screen
+
+Returns:
+	void
+ */
+
 {
 	if (!(cursorY + 1 > scroll && cursorY + 1 < scroll + height))
 	{
@@ -991,6 +1252,13 @@ void Editor::goToMouse()
 }
 
 void Editor::scrollUp()
+/**
+Scrolls up
+
+Returns:
+	void
+ */
+
 {
 	if (scroll > 0)
 	{
@@ -999,8 +1267,15 @@ void Editor::scrollUp()
 }
 
 void Editor::scrollDown()
+/**
+Scrolls down
+
+Returns:
+	void
+ */
+
 {
-	if (file.getLines().size() - scroll >= height / 2)
+	if ((int)file.getLines().size() - scroll >= height / 2)
 	{
 		scroll++;
 	}
@@ -1210,7 +1485,7 @@ Returns:
 	}
 	else
 	{
-		if (lineY != file.getLines().size() - 1)
+		if (lineY != (int)file.getLines().size() - 1)
 		{
 			lineX = 0;
 			lineY++;
@@ -1222,9 +1497,18 @@ Returns:
 }
 
 void Editor::highlight()
+/**
+Starts highlighting
+
+Returns:
+	void
+ */
+
 {
 	if (!highlighting)
 	{
+		copiedLines = 0;
+		pastedLines = 0;
 		highlighting = true;
 		selectedText[0].first = lineX;
 		selectedText[0].second = lineY;
@@ -1232,6 +1516,13 @@ void Editor::highlight()
 }
 
 void Editor::endHightlight()
+/**
+Ends highlighting
+
+Returns:
+	void
+ */
+
 {
 	selectedText[0].first = 0;
 	selectedText[0].second = 0;
@@ -1241,6 +1532,13 @@ void Editor::endHightlight()
 }
 
 vector<pair<int, int>> Editor::orderHighlight()
+/**
+Orders the vector so first pair is the starting highlight index
+
+Returns:
+	vector<pair<int, int>>
+ */
+
 {
 	if (selectedText[0].second > selectedText[1].second)
 	{
@@ -1254,6 +1552,13 @@ vector<pair<int, int>> Editor::orderHighlight()
 }
 
 void Editor::deleteHighlighted()
+/**
+Deletes all text that is highlighted
+
+Returns:
+	void
+ */
+
 {
 	if (highlighting)
 	{
@@ -1263,16 +1568,87 @@ void Editor::deleteHighlighted()
 		cursorY = getWrappedCursorY(lineY, lineX);
 		while (true)
 		{
-			backspace();
 			if (lineX == orderHighlight()[0].first && lineY == orderHighlight()[0].second)
 			{
 				break;
+			}
+			else if (lineY == orderHighlight()[1].second || lineY == orderHighlight()[0].second)
+			{
+				backspace();
+			}
+			else
+			{
+				deleteLine();
 			}
 		}
 	}
 }
 
-void Editor::printLine(bool end, string copiedLine, int lineNum, int &tempY, int &endX)
+int Editor::find(string text)
+/**
+Finds text in the file and returns how many times its found
+
+Args:
+	(string) text: text to find
+Returns:
+	int
+ */
+
+{
+	if (text == "")
+	{
+		return 0;
+	}
+	int occurrences = 0;
+	std::string::size_type pos = 0;
+	for (const string &line : file.getLines())
+	{
+		while ((pos = line.find(text, pos)) != std::string::npos)
+		{
+			++occurrences;
+			pos += text.length();
+		}
+		pos = 0;
+	}
+
+	return occurrences;
+}
+
+void Editor::replaceAllInstances(string from, string to)
+/**
+Replaces all of a specific string inside the file with another string
+
+Args:
+	(string) from: String that will be replaced
+	(string) to: String that's replacing it
+Returns:
+	void
+ */
+
+{
+	if (from != "")
+	{
+		for (int x = 0; x < (int)file.getLines().size(); x++)
+		{
+			file.setLine(x, file.replaceAll(file.getLine(x), from, to));
+		}
+		lineX = file.getLineLength(lineY);
+		cursorX = getWrappedX(lineX);
+		cursorY = getWrappedCursorY(lineY, lineX);
+	}
+}
+
+void Editor::printLine(string copiedLine, int &tempY)
+/**
+prints whole line together
+
+Args:
+	(string) copiedLine: Line to print
+	(int) &tempY: Current y position to print the line
+Returns:
+	void
+ */
+
 {
 	while (true)
 	{
@@ -1280,29 +1656,35 @@ void Editor::printLine(bool end, string copiedLine, int lineNum, int &tempY, int
 		if ((int)copiedLine.length() <= (width - 1))
 		{
 			string text = copiedLine;
-			mvwprintw(textPad, tempY, 0, text.c_str());
-			endX = copiedLine.length();
+			mvwprintw(textPad, tempY, 0, text.c_str(), "%s");
 			tempY++;
 			break;
 		}
 		else
 		{
 			string text = copiedLine.substr(0, width - 1);
-			mvwprintw(textPad, tempY, 0, text.c_str());
+			mvwprintw(textPad, tempY, 0, text.c_str(), "%s");
 			tempY++;
 			copiedLine.erase(0, width - 1);
-		}
-		if (end)
-		{
-			wmove(textPad, tempY, 0);
 		}
 	}
 }
 
-void Editor::printLineByChar(string copiedLine, int lineNum, int &tempY, int &endX)
+void Editor::printLineByChar(string copiedLine, int lineNum, int &tempY)
+/**
+prints line by character to check for lines being highlighted
+
+Args:
+	(string) copiedLine: Line to print
+	(int) lineNum: Current line number
+	(int) &tempY: Current y position to print the line
+Returns:
+	void
+ */
+
 {
 	int printX = 0;
-	for (int x = 0; x < copiedLine.length(); x++)
+	for (int x = 0; x < (int)copiedLine.length(); x++)
 	{
 		if (lineNum == orderHighlight()[0].second && lineNum == orderHighlight()[1].second)
 		{
@@ -1334,12 +1716,131 @@ void Editor::printLineByChar(string copiedLine, int lineNum, int &tempY, int &en
 			printX = 0;
 			tempY++;
 		}
-		endX = printX;
 	}
 	tempY++;
 }
 
-void Editor::writeToScreen(bool end)
+void Editor::findPrintLineByChar(string copiedLine, string findTxt, int &tempY)
+/**
+prints line and highlights characters that are being found using ctrl-f
+
+Args:
+	(string) copiedLine: Line to print
+	(string) findTxt: text to be highlighted
+	(int) &tempY: Current y position to print the line
+Returns:
+	void
+ */
+
+{
+	vector<int> index = {};
+	if (findTxt != "")
+	{
+		std::string::size_type pos = 0;
+		while ((pos = copiedLine.find(findTxt, pos)) != std::string::npos)
+		{
+			index.push_back(pos);
+			for (int i = 1; i < (int)findTxt.length(); i++)
+			{
+				index.push_back(pos + i);
+			}
+			pos += findTxt.length();
+		}
+	}
+
+	if (index.size() > 0)
+	{
+		int printX = 0;
+		for (int x = 0; x < (int)copiedLine.length(); x++)
+		{
+			if (std::find(index.begin(), index.end(), x) != index.end())
+			{
+				wattron(textPad, COLOR_PAIR(1));
+			}
+			mvwaddch(textPad, tempY, printX, copiedLine[x]);
+			wattroff(textPad, COLOR_PAIR(1));
+
+			printX += 1;
+			if (printX == width - 1)
+			{
+				printX = 0;
+				tempY++;
+			}
+		}
+		tempY++;
+	}
+	else
+	{
+		printLine(copiedLine, tempY);
+	}
+}
+
+void Editor::updateStatus(StatusBar &status)
+/**
+Updates status based on editor state
+
+Args:
+	(StatusBar&) status: StatusBar object
+Returns:
+	void
+ */
+
+{
+	if (state == "ctrls")
+	{
+		return;
+	}
+
+	std::string text;
+	if (state == "ctrlz")
+	{
+		if (stack.getQueueNum() > 0)
+		{
+			status.setInfo("Undo", false);
+		}
+		else
+		{
+			status.setInfo("Undo Limit Reached", true);
+		}
+	}
+	else if (state == "ctrly")
+	{
+		if (stack.getQueueNum() < stack.getStackSize() - 1)
+		{
+			status.setInfo("Redo", false);
+		}
+		else
+		{
+			status.setInfo("Redo Limit Reached", true);
+		}
+	}
+	else if (copiedLines > 0)
+	{
+		string word = copiedLines == 1 ? "Line" : "Lines";
+		text = std::format("{} {} Copied", copiedLines, word);
+		status.setInfo(text, false);
+	}
+	else if (pastedLines > 0)
+	{
+		string word = pastedLines == 1 ? "Line" : "Lines";
+		text = std::format("{} {} Pasted", pastedLines, word);
+		status.setInfo(text, false);
+	}
+	else if (highlighting)
+	{
+		string word = (orderHighlight()[1].second - orderHighlight()[0].second) + 1 == 1 ? "Line" : "Lines";
+		text = std::format("{} {} Highlighted", (orderHighlight()[1].second - orderHighlight()[0].second) + 1, word);
+		status.setInfo(text, false);
+	}
+	else
+	{
+		string filename = file.getName() == "" ? "Untitled File" : file.getName();
+		text = std::format("Editing [{}]   |   Ln {} / {}", filename, lineY + 1, file.getLines().size());
+		status.setInfo(text, false);
+	}
+}
+
+void Editor::writeToScreen(StatusBar &status)
 /**
 Clears the screen and writes each line based on the File object and refreshes the screen at the end
 
@@ -1351,8 +1852,8 @@ Returns:
  */
 
 {
-	int strSize = to_string(file.getLines().size() - 1).length();
-	if (lineNums && strSize >= 2 && lineNumbersWidth - 2 != strSize || getWrappedCursorY(file.getLines().size() - 1, file.getLine(file.getLines().size() - 1).length()) + height >= maxHeight)
+	int strSize = to_string(file.getLines().size()).length();
+	if ((lineNums && strSize >= 1 && lineNumbersWidth - 3 != strSize) || getWrappedCursorY(file.getLines().size() - 1, file.getLine(file.getLines().size() - 1).length()) + height >= maxHeight)
 	{
 		if (getWrappedCursorY(file.getLines().size() - 1, file.getLine(file.getLines().size() - 1).length()) + height >= maxHeight)
 		{
@@ -1363,9 +1864,7 @@ Returns:
 
 	int lineNum = 0;
 
-	int tempX, tempY, endX;
-	tempX = tempY = 0;
-	endX = 0;
+	int tempY = 0;
 
 	werase(linesPad);
 	werase(textPad);
@@ -1380,79 +1879,83 @@ Returns:
 		string nums = "";
 		if (lineNums) // Checks if line numbers should be shown
 		{
-			for (int i = 0; i < ((lineNumbersWidth - 1) - to_string(lineNum).length()); i++)
+			for (int i = 0; i < ((lineNumbersWidth - 2) - (int)to_string(lineNum).length()); i++)
 			{
 				nums = nums.append(" ");
 			}
 			nums += to_string(lineNum);
+			mvwprintw(linesPad, tempY, 0, nums.c_str(), "%s");
+
 			wattron(linesPad, COLOR_PAIR(2));
-			mvwprintw(linesPad, tempY, 0, nums.c_str());
+			mvwprintw(linesPad, tempY, lineNumbersWidth - 2, "| ");
 			wattroff(linesPad, COLOR_PAIR(2));
 		}
 		else
 		{
-			for (int i = 0; i < (lineNumbersWidth - 2); i++)
+			for (int i = 0; i < (lineNumbersWidth - 3); i++)
 			{
 				nums = nums.append(" ");
 			}
 			nums += "~";
+			mvwprintw(linesPad, tempY, 0, nums.c_str(), "%s");
+
 			wattron(linesPad, COLOR_PAIR(2));
-			mvwprintw(linesPad, tempY, 0, nums.c_str());
+			mvwprintw(linesPad, tempY, lineNumbersWidth - 2, "| ");
 			wattroff(linesPad, COLOR_PAIR(2));
 		}
 
 		string copiedLine = file.replaceAll(line, "\t", tabSpaces); // Replaces the tabspaces
 
-		if (highlighting)
+		if (status.getState() != "find" && status.getState() != "replace")
 		{
-			if (lineNum - 1 > orderHighlight()[0].second && lineNum - 1 < orderHighlight()[1].second)
+			if (highlighting)
 			{
-				wattron(textPad, COLOR_PAIR(1));
-				if (copiedLine.length() == 0)
+				if (lineNum - 1 > orderHighlight()[0].second && lineNum - 1 < orderHighlight()[1].second)
 				{
-					mvwprintw(textPad, tempY, 0, " ");
+					wattron(textPad, COLOR_PAIR(1));
+					if (copiedLine.length() == 0)
+					{
+						mvwprintw(textPad, tempY, 0, " ");
+					}
+					printLine(copiedLine, tempY);
+					wattroff(textPad, COLOR_PAIR(1));
 				}
-				printLine(end, copiedLine, lineNum, tempY, endX);
-				wattroff(textPad, COLOR_PAIR(1));
-			}
-			else if (lineNum - 1 == orderHighlight()[0].second || lineNum - 1 == orderHighlight()[1].second)
-			{
-				printLineByChar(copiedLine, lineNum - 1, tempY, endX);
+				else if (lineNum - 1 == orderHighlight()[0].second || lineNum - 1 == orderHighlight()[1].second)
+				{
+					printLineByChar(copiedLine, lineNum - 1, tempY);
+				}
+				else
+				{
+					printLine(copiedLine, tempY);
+				}
 			}
 			else
 			{
-				printLine(end, copiedLine, lineNum, tempY, endX);
+				printLine(copiedLine, tempY);
 			}
 		}
 		else
 		{
-			printLine(end, copiedLine, lineNum, tempY, endX);
+			findPrintLineByChar(copiedLine, status.getFindTxt(), tempY);
 		}
 	}
 
-	if (!end)
-	{
-		wmove(textPad, cursorY, cursorX);
-	}
-	else
-	{
-		cursorX = endX;
-		cursorY = tempY - 1;
-		lineX = file.getLineLength(file.getLines().size() - 1);
-		lineY = file.getLines().size() - 1;
-	}
+	wmove(textPad, cursorY, cursorX);
 
 	wmove(linesPad, tempY, 0);
 	string nums = "";
-	for (int i = 0; i < (lineNumbersWidth - 2); i++)
+	for (int i = 0; i < (lineNumbersWidth - 3); i++)
 	{
 		nums = nums.append(" ");
 	}
 	nums.append("~");
-
-	for (int n = tempY; n < file.getLines().size() + height * 2; n++)
+	for (int n = tempY; n < (int)file.getLines().size() + height * 2; n++)
 	{
-		mvwprintw(linesPad, n, 0, nums.c_str());
+		mvwprintw(linesPad, n, 0, nums.c_str(), "%s");
+
+		wattron(linesPad, COLOR_PAIR(2));
+		mvwprintw(linesPad, n, lineNumbersWidth - 2, "| ");
+		wattroff(linesPad, COLOR_PAIR(2));
 	}
 
 	prefresh(linesPad, scroll, 0, 0, 0, height - 2, lineNumbersWidth);
@@ -1460,7 +1963,11 @@ Returns:
 
 	if (cursorY + 1 > scroll && cursorY + 1 < scroll + height)
 	{
-		curs_set(1);
+		cursorVisible = true;
+	}
+	else
+	{
+		cursorVisible = false;
 	}
 }
 
@@ -1519,6 +2026,17 @@ Returns:
 }
 
 int Editor::getWrappedCursorY(int y, int x)
+/**
+Gets the current cursor Y (no matter line wrapping)
+
+Args:
+	(string) copiedLine: Line to print
+	(int) lineNum: Current line number
+	(int) &tempY: Current y position to print the line
+Returns:
+	void
+ */
+
 {
 	int result = 0;
 	for (int i = 0; i < y; i++)
@@ -1544,104 +2062,14 @@ Returns:
 	string copiedLine = file.replaceAll(file.getLine(lineY), "\t", tabSpaces);
 	copiedLine = copiedLine.substr(0, x);
 
-	for (const int x : file.getTabs(lineY, tabSize))
+	vector<int> tabs = file.getTabs(lineY, tabSize);
+	for (int x = (int)tabs.size() - 1; x != -1; x--)
 	{
-		if (x - tabSize < copiedLine.length())
+		if (tabs[x] - tabSize < (int)copiedLine.length())
 		{
-			copiedLine.replace(x - tabSize, tabSpaces.length(), "\t");
-		}
-		else
-		{
-			break;
+			copiedLine.replace(tabs[x] - tabSize, tabSize, "\t");
 		}
 	}
 
 	return copiedLine.length();
-}
-
-int Editor::enactCommand(CommandLine &cmd, vector<string> command)
-/**
-Enacts a command based on the arguments
-
-Args:
-	(CommandLine&) cmd: CommandLine Object
-	(vector<string>) command: Vector of the command
-
-Returns:
-	int
- */
-
-{
-	if (command[0].length() != 0)
-	{
-		if (command[0] == "save")
-		{
-			ctrlS(cmd);
-		}
-		else if (command[0] == "linenums")
-		{
-			toggleLineNums();
-			cmd.displayInfo("Turned on Line Numbers.");
-		}
-		else if (command[0] == "autocomplete")
-		{
-			toggleAutoComplete();
-			cmd.displayInfo("Turned on Simple Auto Complete.");
-		}
-		else if (command[0] == "quit")
-		{
-			return 0;
-		}
-		else if (command[0] == "saveas")
-		{
-			if (file.getName().length() != 0)
-			{
-				try
-				{
-					filesystem::rename(file.getName(), command[1]);
-				}
-				catch (const std::exception &e)
-				{
-					cmd.displayError("Invalid File Location.");
-					return 1;
-				}
-			}
-			file.setName(command[1]);
-			ctrlS(cmd);
-		}
-		else if (command[0] == "switch")
-		{
-			fstream readFile(command[1]);
-			if (readFile.fail() && command[1].length() != 0)
-			{
-				cmd.displayError("Invalid File Location.");
-			}
-			else
-			{
-				lineX = lineY = 0;
-				cursorX = cursorY = 0;
-				file.setName(command[1]);
-				file.open(command[1]);
-				cmd.displayInfo("Switched File to " + command[1] + ".");
-			}
-			readFile.close();
-		}
-		else if (command[0] == "tabsize")
-		{
-			try
-			{
-				changeTabSize(stoi(command[1]));
-				cmd.displayInfo("Changed Tabsize to " + command[1] + ".");
-				lineX = file.getLineLength(lineY);
-				cursorX = getWrappedX(lineX);
-				cursorY += getWrappedY(lineX) - 1;
-			}
-			catch (const std::exception &e)
-			{
-				cmd.displayError("Invalid Tabsize.");
-			}
-		}
-		return 1;
-	}
-	return 2;
 }

@@ -1,0 +1,100 @@
+The first computer programmer was Ada Lovelace in the 1800s
+The first computer bug was a literal bug
+Python was named after Monty Python comedy, not the snake
+The term debugging came from removing moths from computers
+HTML stands for HyperText Markup Language
+The first email was sent by Ray Tomlinson in 1971
+COBOL was one of the earliest programming languages, created in 1959
+JavaScript was created in just 10 days in 1995
+Open-source software lets anyone view and modify its code
+Linux is named after its creator, Linus Torvalds
+The Unicode standard supports over 140,000 characters
+Programming is about solving problems, not just writing code
+The Hello, World program is the first program most coders write
+Git was created by Linus Torvalds to manage Linux development
+The first website went live in 1991 by Tim Berners-Lee
+There are over 700 programming languages in the world
+A byte consists of 8 bits and can represent 256 values
+SQL is used to interact with databases like MySQL or PostgreSQL
+The C language was created in 1972 by Dennis Ritchie
+Machine code is the lowest level of software, directly executed by hardware
+The first game ever coded was Tic-Tac-Toe in 1952
+Assembly language is one step above machine code
+Grace Hopper developed the first compiler in 1952
+Java was initially called Oak before being renamed
+The internet is not the same as the World Wide Web
+PHP originally stood for Personal Home Page
+Programs written in binary are nearly impossible for humans to read
+Bugs in code cost the global economy billions each year
+ASCII was introduced in 1963 for text encoding
+The first floppy disk could hold 80 kilobytes of data
+A kilobyte is technically 1024 bytes, not 1000
+Stack Overflow was launched in 2008 as a Q&A site for developers
+Mark Zuckerberg built the first version of Facebook in 2004
+Blockchain technology is heavily dependent on cryptography
+Moore's Law states that computing power doubles roughly every two years
+Google processes over 3.5 billion searches every day
+Compilers translate high-level code into machine code
+Python is often used in artificial intelligence and machine learning
+Scratch is a visual programming language designed for kids
+CAPTCHA stands for Completely Automated Public Turing Test to Tell Computers and Humans Apart
+CSS is used to style HTML content
+Alan Turing is considered the father of theoretical computer science
+Unicode includes emojis as part of its character set
+Fortran is one of the oldest programming languages still in use
+APIs allow programs to interact with each other
+Cloud computing lets users store and process data over the internet
+Blockchain was first implemented in Bitcoin in 2009
+Virtual machines allow software to run independently of the host system
+The Raspberry Pi is a low-cost, credit-card-sized computer
+Debugging can take up more time than writing the actual code
+Grace Hopper developed the first compiler for a programming language
+The average developer writes about 50 lines of code per day
+Java was initially named Oak before being renamed in 1995
+The first mobile app store was launched by Nokia in 1998
+ASCII stands for American Standard Code for Information Interchange
+The first computer virus, Elk Cloner, was created in 1982
+Mark Zuckerberg wrote the first version of Facebook in just a few weeks
+CAPTCHA stands for Completely Automated Public Turing test to tell Computers and Humans Apart
+The FORTRAN language was designed for scientific computing in the 1950s
+Hackers initially referred to skilled computer enthusiasts, not cybercriminals
+Apple's first logo featured Isaac Newton sitting under a tree
+The first software license agreement was written in 1964
+The ENIAC computer weighed over 27 tons and was built in 1945
+Recursion is a function that calls itself as part of its execution
+Moore's Law predicts the doubling of transistors in microchips every two years
+Algorithms were named after the mathematician Al-Khwarizmi
+Unicode allows emojis to be displayed across different platforms
+The term spam for unwanted emails originated from a Monty Python sketch
+Minecraft was originally written in Java
+The BASIC programming language was designed to make coding accessible
+The term framework refers to reusable software for app development
+Ada, a programming language, was named after Ada Lovelace
+Linus Torvalds wrote the first version of Linux in his dorm room
+Stack Overflow launched in 2008 as a Q&A platform for developers
+A null pointer refers to a pointer that does not point to any memory
+Functional programming avoids changing states and mutable data
+The first commercial computer was the UNIVAC, launched in 1951
+Google processes over 3.5 billion searches per day, powered by code
+The first hard drive was created by IBM in 1956 and weighed over a ton
+Object-oriented programming organizes code using classes and objects
+The first gaming console, Magnavox Odyssey, used cartridges with pre-programmed code
+The term coding comes from the word code, meaning a system of rules
+A kilobyte is 1024 bytes, not 1000, due to binary counting
+The first digital calculator was created by Konrad Zuse in 1938
+Alan Turing developed the concept of a universal machine, a precursor to modern computers
+The term bug in software was popularized by Grace Hopper
+The average lifespan of a software engineer's code is about 6 years
+JSON stands for JavaScript Object Notation and is widely used for APIs
+The Linux mascot is a penguin named Tux
+WordPress powers over 40 percent of all websites on the internet
+The first Android phone was the HTC Dream, released in 2008
+ASCII art is made by arranging characters into visual patterns
+The Java programming language is not related to JavaScript
+Fibonacci numbers are used in some algorithms and data structures
+APIs allow different software systems to communicate with each other
+Programmers often use 0-based indexing, where counting starts at 0
+HTML5 introduced new semantic tags like <article> and <header>
+The default programming font in many IDEs is Consolas or Courier New
+Cryptography protects data through algorithms and secure protocols
+Regex (Regular Expressions) is a tool for pattern matching in strings
