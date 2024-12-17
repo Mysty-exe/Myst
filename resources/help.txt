@@ -9,7 +9,9 @@ Shortcuts:
   Ctrl-F   -   Find/Replace
   Ctrl-E   -   Settings/Menu
   Ctrl-P   -   Preferences
-  Ctrl-Q   -   Quit"
+  Ctrl-B   -   Previous File
+  Ctrl-N   -   Next File
+  Ctrl-Q   -   Quit
 
 Options:
   -help             Displays this help message.
