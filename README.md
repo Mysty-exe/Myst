@@ -44,10 +44,10 @@ Myst will automatically apply changes on the next startup.
 - File Paths: Relative paths may cause issues if Myst is run outside its main directory. Ensure the resources/ folder is in the correct location.
 
 ## Screenshots
-- [Myst Logo](resources/Screenshots/Logo.png)
-- [Example Python Code](resources/Screenshots/Code.png)
-- [List of Files To Switch](resources/Screenshots/Files.png)
-- [Settings](resources/Screenshots/Settings.png)
+- [Myst Logo](resources/screenshots/Logo.png)
+- [Example Python Code](resources/screenshots/Code.png)
+- [List of Files To Switch](resources/screenshots/Files.png)
+- [Settings](resources/sreenshots/Settings.png)
 
 ## Contact
 For issues or questions, please open an issue on GitHub or contact me directly at o.s.toure72@gmail.com.
