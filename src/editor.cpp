@@ -249,6 +249,10 @@ Returns:
 	autoComplete = settings.getProgrammingMode() == "On" ? true : false;
 	tabSpaces = setTab();
 	file.setTabSize(tabSpaces);
+
+	lineX = 0;
+	cursorX = getWrappedX(lineX);
+	cursorY = getWrappedCursorY(lineY, lineX);
 }
 
 void Editor::setScanner(LexerScanner s)
