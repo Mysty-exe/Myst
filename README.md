@@ -47,7 +47,7 @@ Myst will automatically apply changes on the next startup.
 - [Myst Logo](resources/screenshots/Logo.png)
 - [Example Python Code](resources/screenshots/Code.png)
 - [List of Files To Switch](resources/screenshots/Files.png)
-- [Settings](resources/sreenshots/Settings.png)
+- [Settings](resources/screenshots/Settings.png)
 
 ## Contact
 For issues or questions, please open an issue on GitHub or contact me directly at o.s.toure72@gmail.com.
