@@ -12,7 +12,7 @@ Returns:
 {
 }
 
-Menu::Menu(int w, int h, Settings &settings)
+Menu::Menu(int w, int h, Settings &settings, string projectFile)
 /**
 Menu Class Constructor
 
@@ -42,7 +42,7 @@ Returns:
     fact = "";
     int lineNumber = 1;
     int random = 1 + (rand() % 101);
-    fstream readFile("resources/facts.txt");
+    fstream readFile(projectFile + "/resources/facts.txt");
     while (getline(readFile, fact))
     {
         if (lineNumber == random)
@@ -422,18 +422,18 @@ Returns:
         {
             if (line == (height / 2 - 9) || line == (height / 2 - 9) + 5 || line == (height / 2 - 9) + 7 || line == (height / 2 - 9) + 17)
             {
-                wattron(menuPad, COLOR_PAIR(2));
+                wattron(menuPad, COLOR_PAIR(1));
             }
         }
         else if (currentMenu == 2)
         {
             if ((line - (height / 2 - 9)) % 4 == 0)
             {
-                wattron(menuPad, COLOR_PAIR(2));
+                wattron(menuPad, COLOR_PAIR(1));
             }
         }
         mvwprintw(menuPad, line, x + 30, text.c_str(), "%s");
-        wattroff(menuPad, COLOR_PAIR(2));
+        wattroff(menuPad, COLOR_PAIR(1));
         line += 1;
     }
 }

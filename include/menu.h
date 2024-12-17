@@ -22,7 +22,7 @@ private:
 public:
     WINDOW *menuPad;
     Menu();
-    Menu(int w, int h, Settings &settings);
+    Menu(int w, int h, Settings &settings, string projectFile);
     int getCurrentMenu();
     void setCurrentMenu(int current);
     int getWidth();

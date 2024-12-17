@@ -1,7 +1,7 @@
 #pragma once
 #include "app.h"
 
-App::App(int w, int h)
+App::App(int w, int h, string path)
 /**
 App Class Constructor
 
@@ -18,6 +18,7 @@ Returns:
     MODE = 1;
     width = w;
     height = h;
+    projectPath = path;
 }
 
 void App::init()
@@ -29,10 +30,10 @@ Returns:
  */
 
 {
-    settings.getSettings();
+    settings.getSettings(projectPath);
     Editor editor(width, height);
     StatusBar status(width, height);
-    Menu menu(width, height, settings);
+    Menu menu(width, height, settings, projectPath);
     editor.setSettings(settings);
 
     setSettings(settings);
@@ -196,43 +197,128 @@ Returns:
  */
 
 {
-    if (color == "BLUE")
+    if (color == "Arctic Horizon")
     {
-        init_pair(1, COLOR_WHITE, COLOR_BLUE);
-        init_pair(2, COLOR_BLUE, -1);
+        init_color(CUSTOM_MAIN, 431, 458, 522);
+        init_color(CUSTOM_TEXT, 1000, 1000, 1000);
+        init_color(CUSTOM_KEYWORD, 506, 631, 757);
+        init_color(CUSTOM_STRING, 639, 745, 549);
+        init_color(CUSTOM_COMMENT, 263, 298, 369);
+        init_color(CUSTOM_NUMBER, 922, 796, 545);
+        init_color(CUSTOM_DELIMITER, 561, 737, 733);
+        init_color(CUSTOM_OPERATOR, 561, 737, 733);
+        init_color(CUSTOM_SPECIAL, 533, 753, 816);
+        init_color(CUSTOM_PUNCTUATION, 561, 737, 733);
+        init_color(CUSTOM_OTHER, 298, 337, 416);
+        init_color(CUSTOM_ERROR, 749, 380, 416);
+        init_color(CUSTOM_HIGHLIGHT, 400, 400, 500);
     }
-    else if (color == "RED")
+    else if (color == "Twilight Cascade")
     {
-        init_pair(1, COLOR_WHITE, COLOR_RED);
-        init_pair(2, COLOR_RED, -1);
+        init_color(CUSTOM_MAIN, 250, 250, 350);
+        init_color(CUSTOM_TEXT, 850, 850, 950);
+        init_color(CUSTOM_KEYWORD, 700, 300, 900);
+        init_color(CUSTOM_STRING, 300, 600, 700);
+        init_color(CUSTOM_COMMENT, 400, 400, 600);
+        init_color(CUSTOM_NUMBER, 200, 850, 950);
+        init_color(CUSTOM_DELIMITER, 700, 600, 900);
+        init_color(CUSTOM_OPERATOR, 400, 300, 950);
+        init_color(CUSTOM_SPECIAL, 700, 600, 900);
+        init_color(CUSTOM_PUNCTUATION, 400, 300, 950);
+        init_color(CUSTOM_OTHER, 300, 500, 950);
+        init_color(CUSTOM_ERROR, 900, 200, 600);
+        init_color(CUSTOM_HIGHLIGHT, 600, 500, 450);
     }
-    else if (color == "GREEN")
+    else if (color == "Crimson Ember")
     {
-        init_pair(1, COLOR_WHITE, COLOR_GREEN);
-        init_pair(2, COLOR_GREEN, -1);
+        init_color(CUSTOM_MAIN, 300, 250, 250);
+        init_color(CUSTOM_TEXT, 900, 800, 800);
+        init_color(CUSTOM_KEYWORD, 850, 200, 200);
+        init_color(CUSTOM_STRING, 750, 400, 400);
+        init_color(CUSTOM_COMMENT, 600, 300, 300);
+        init_color(CUSTOM_NUMBER, 900, 100, 100);
+        init_color(CUSTOM_DELIMITER, 700, 300, 300);
+        init_color(CUSTOM_OPERATOR, 800, 300, 300);
+        init_color(CUSTOM_SPECIAL, 700, 300, 300);
+        init_color(CUSTOM_PUNCTUATION, 600, 250, 200);
+        init_color(CUSTOM_OTHER, 750, 200, 200);
+        init_color(CUSTOM_ERROR, 950, 200, 100);
+        init_color(CUSTOM_HIGHLIGHT, 300, 400, 500);
     }
-    else if (color == "YELLOW")
+    else if (color == "Azure Mist")
     {
-        init_pair(1, COLOR_WHITE, COLOR_YELLOW);
-        init_pair(2, COLOR_YELLOW, -1);
+        init_color(CUSTOM_MAIN, 250, 300, 400);
+        init_color(CUSTOM_TEXT, 800, 900, 1000);
+        init_color(CUSTOM_KEYWORD, 300, 600, 900);
+        init_color(CUSTOM_STRING, 150, 500, 750);
+        init_color(CUSTOM_COMMENT, 200, 300, 500);
+        init_color(CUSTOM_NUMBER, 400, 650, 950);
+        init_color(CUSTOM_DELIMITER, 250, 500, 800);
+        init_color(CUSTOM_OPERATOR, 200, 500, 900);
+        init_color(CUSTOM_SPECIAL, 500, 700, 900);
+        init_color(CUSTOM_PUNCTUATION, 500, 700, 900);
+        init_color(CUSTOM_OTHER, 200, 500, 900);
+        init_color(CUSTOM_ERROR, 900, 300, 300);
+        init_color(CUSTOM_HIGHLIGHT, 100, 200, 300);
     }
-    else if (color == "MAGENTA")
+    else if (color == "Verdant Glow")
     {
-        init_pair(1, COLOR_WHITE, COLOR_MAGENTA);
-        init_pair(2, COLOR_MAGENTA, -1);
+        init_color(CUSTOM_MAIN, 300, 600, 300);
+        init_color(CUSTOM_TEXT, 800, 900, 800);
+        init_color(CUSTOM_KEYWORD, 500, 700, 300);
+        init_color(CUSTOM_STRING, 400, 600, 200);
+        init_color(CUSTOM_COMMENT, 300, 500, 300);
+        init_color(CUSTOM_NUMBER, 200, 700, 100);
+        init_color(CUSTOM_DELIMITER, 600, 700, 500);
+        init_color(CUSTOM_OPERATOR, 700, 500, 100);
+        init_color(CUSTOM_SPECIAL, 100, 600, 200);
+        init_color(CUSTOM_PUNCTUATION, 300, 500, 400);
+        init_color(CUSTOM_OTHER, 400, 700, 300);
+        init_color(CUSTOM_ERROR, 1000, 200, 200);
+        init_color(CUSTOM_HIGHLIGHT, 600, 800, 400);
     }
-    else if (color == "CYAN")
+    else if (color == "Earthy Brown")
     {
-        init_pair(1, COLOR_WHITE, COLOR_CYAN);
-        init_pair(2, COLOR_CYAN, -1);
+        init_color(CUSTOM_MAIN, 300, 180, 90);
+        init_color(CUSTOM_TEXT, 600, 400, 200);
+        init_color(CUSTOM_KEYWORD, 800, 500, 150);
+        init_color(CUSTOM_STRING, 500, 250, 120);
+        init_color(CUSTOM_COMMENT, 350, 230, 100);
+        init_color(CUSTOM_NUMBER, 700, 400, 80);
+        init_color(CUSTOM_DELIMITER, 550, 300, 140);
+        init_color(CUSTOM_OPERATOR, 850, 450, 80);
+        init_color(CUSTOM_SPECIAL, 420, 210, 90);
+        init_color(CUSTOM_PUNCTUATION, 550, 280, 100);
+        init_color(CUSTOM_OTHER, 600, 350, 180);
+        init_color(CUSTOM_ERROR, 1000, 50, 50);
+        init_color(CUSTOM_HIGHLIGHT, 950, 800, 400);
     }
-    else if (color == "BLACK")
-    {
-        init_pair(1, COLOR_WHITE, COLOR_BLACK);
-        init_pair(2, COLOR_BLACK, -1);
-    }
-    init_pair(3, COLOR_GREEN, -1);
-    init_pair(4, COLOR_RED, -1);
+
+    init_pair(1, CUSTOM_MAIN, -1);
+    init_pair(2, CUSTOM_TEXT, -1);
+    init_pair(3, CUSTOM_KEYWORD, -1);
+    init_pair(4, CUSTOM_STRING, -1);
+    init_pair(5, CUSTOM_COMMENT, -1);
+    init_pair(6, CUSTOM_NUMBER, -1);
+    init_pair(7, CUSTOM_DELIMITER, -1);
+    init_pair(8, CUSTOM_OPERATOR, -1);
+    init_pair(9, CUSTOM_SPECIAL, -1);
+    init_pair(10, CUSTOM_PUNCTUATION, -1);
+    init_pair(11, CUSTOM_OTHER, -1);
+    init_pair(12, CUSTOM_ERROR, -1);
+
+    init_pair(13, CUSTOM_MAIN, CUSTOM_HIGHLIGHT);
+    init_pair(14, CUSTOM_TEXT, CUSTOM_HIGHLIGHT);
+    init_pair(15, CUSTOM_KEYWORD, CUSTOM_HIGHLIGHT);
+    init_pair(16, CUSTOM_STRING, CUSTOM_HIGHLIGHT);
+    init_pair(17, CUSTOM_COMMENT, CUSTOM_HIGHLIGHT);
+    init_pair(18, CUSTOM_NUMBER, CUSTOM_HIGHLIGHT);
+    init_pair(19, CUSTOM_DELIMITER, CUSTOM_HIGHLIGHT);
+    init_pair(20, CUSTOM_OPERATOR, CUSTOM_HIGHLIGHT);
+    init_pair(21, CUSTOM_SPECIAL, CUSTOM_HIGHLIGHT);
+    init_pair(22, CUSTOM_PUNCTUATION, CUSTOM_HIGHLIGHT);
+    init_pair(23, CUSTOM_OTHER, CUSTOM_HIGHLIGHT);
+    init_pair(24, CUSTOM_ERROR, CUSTOM_HIGHLIGHT);
 }
 
 void App::displayLogo()
@@ -249,15 +335,15 @@ Returns:
     string text;
     int tempY = (height / 2) - (16 / 2);
 
-    fstream readFile("resources/logo.txt");
+    fstream readFile(projectPath + "/resources/logo.txt");
     while (getline(readFile, text))
     {
         if (tempY - ((height / 2) - (16 / 2)) < 13)
         {
-            wattron(stdscr, COLOR_PAIR(2));
+            wattron(stdscr, COLOR_PAIR(1));
         }
         mvprintw(tempY, (width / 2) - (text.length() / 2), text.c_str(), "%s");
-        wattroff(stdscr, COLOR_PAIR(2));
+        wattroff(stdscr, COLOR_PAIR(1));
 
         tempY++;
     }
@@ -436,6 +522,11 @@ Returns:
         editor.nextFile();
         break;
 
+    case (68 & 0x1f):
+        MODE = 0;
+        endwin();
+        break;
+
     case KEY_SR:
         editor.shiftUpArrow();
         editor.goToMouse();
@@ -505,8 +596,23 @@ Returns:
  */
 
 {
+    MEVENT event;
     switch (character)
     {
+    case KEY_MOUSE:
+        if (getmouse(&event) == OK && (status.getState() == "find" || status.getState() == "replace"))
+        {
+            if (event.bstate & BUTTON4_PRESSED)
+            {
+                editor.scrollUp();
+            }
+            else if (event.bstate & BUTTON5_PRESSED)
+            {
+                editor.scrollDown();
+            }
+        }
+        break;
+
     case KEY_RESIZE:
         curs_set(0);
         status.updateDimensions();
@@ -764,12 +870,18 @@ Returns:
     case (10):
     {
         File file = editor.getFile();
-        if (menu.enter(file) == 1)
+        int x = menu.enter(file);
+        if (x == 1)
         {
             MODE = 1;
             editor.resetEditor();
+            editor.setFile(file);
+
+            HistoryStack stack = editor.getStack();
+            stack.clear();
+            editor.setStack(stack);
         }
-        editor.setFile(file);
+
         break;
     }
 
@@ -832,7 +944,7 @@ Returns:
         if (action == 0)
         {
             editor.setSettings(settings);
-            settings.saveToFile();
+            settings.saveToFile(projectPath);
             MODE = 3;
             editor.setFile(file);
             return;
@@ -874,7 +986,7 @@ Returns:
         }
         if (action == 4)
         {
-            if (settings.getColorIndex() == 6)
+            if (settings.getColorIndex() == 5)
             {
                 settings.setColorIndex(-1);
             }
@@ -1055,7 +1167,7 @@ Returns:
         menu.resetPad();
         if (MODE != 7)
         {
-            menu.setCurrentDirectory(filesystem::path(editor.getFile().getDirectory()).parent_path());
+            menu.setCurrentDirectory(editor.getFile().getDirectory());
             werase(menu.menuPad);
             wrefresh(menu.menuPad);
         }
@@ -1101,12 +1213,15 @@ Returns:
 {
     File file = File();
     HistoryStack stack = HistoryStack();
+    LexerScanner scanner = LexerScanner();
 
     file.open(filename);
     editor.setFile(file);
     editor.setStack(stack);
-    menu.setCurrentDirectory(filesystem::path(file.getDirectory()).parent_path());
+    editor.setScanner(scanner);
+    menu.setCurrentDirectory(editor.getFile().getDirectory());
 
+    editor.updateDimensions();
     editor.updateStatus(status);
     editor.writeToScreen(status);
 

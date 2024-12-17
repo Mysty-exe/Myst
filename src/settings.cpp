@@ -21,14 +21,13 @@ Returns:
     lineNumbers = "On";
     tabSize = "4";
     programmingMode = "On";
-    colorScheme = "BLUE";
-    colors = {"BLUE",
-              "RED",
-              "GREEN",
-              "YELLOW",
-              "MAGENTA",
-              "CYAN",
-              "BLACK"};
+    colorScheme = "Arctic Horizon";
+    colors = {"Arctic Horizon",
+              "Twilight Cascade",
+              "Crimson Ember",
+              "Azure Mist",
+              "Verdant Glow",
+              "Earthy Brown"};
     colorIndex = 0;
 }
 
@@ -204,7 +203,7 @@ Returns:
     return 1;
 }
 
-void Settings::getSettings()
+void Settings::getSettings(string projectPath)
 /**
 Loads settings
 
@@ -213,13 +212,14 @@ Returns:
  */
 
 {
-    if (ini_parse("config/settings.ini", loadFromFile, this) < 0)
+    string f = projectPath + "/config/settings.ini";
+    if (ini_parse(f.c_str(), loadFromFile, this) < 0)
     {
         cout << "Can't load 'settings.ini'\n";
     }
 }
 
-void Settings::saveToFile()
+void Settings::saveToFile(string projectPath)
 /**
 Saves settings into .ini file
 
@@ -228,7 +228,8 @@ Returns:
  */
 
 {
-    fstream file("config/settings.ini", ios::out | ios::trunc);
+    string f = projectPath + "/config/settings.ini";
+    fstream file(f, ios::out | ios::trunc);
     file << "[editor]\n";
     file << "tabsize = " << tabSize << "\n";
     file << "linenums = " << lineNumbers << "\n";

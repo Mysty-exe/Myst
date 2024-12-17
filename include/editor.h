@@ -11,6 +11,7 @@
 #include "file.h"
 #include "history.h"
 #include "settings.h"
+#include "scanner.h"
 
 using namespace std;
 
@@ -23,6 +24,7 @@ class Editor
 private:
     File file;
     HistoryStack stack;
+    LexerScanner scanner;
 
     int maxHeight;
     int width, height;
@@ -58,8 +60,10 @@ public:
     void setFile(File f);
     void previousFile();
     void nextFile();
+    HistoryStack getStack();
     void setStack(HistoryStack s);
     void setSettings(Settings &settings);
+    void setScanner(LexerScanner scanner);
     bool checkSpecialChar(char character);
     bool checkOtherChar(char character);
 
@@ -96,7 +100,6 @@ public:
     void ctrlS(StatusBar &status);
     void ctrlA();
     void ctrlC();
-    void ctrlF();
     void ctrlV();
     void ctrlX();
     void ctrlY();
@@ -123,7 +126,9 @@ public:
     void replaceAllInstances(string from, string to);
     void printLine(string copiedLine, int &tempY);
     void printLineByChar(string copiedLine, int lineNum, int &tempY);
+    void printLineByLexeme(string copiedLine, int lineNum, int &tempY);
     void findPrintLineByChar(string copiedLine, string findTxt, int &tempY);
+    void findPrintLineByLexeme(string copiedLine, string findTxt, int &tempY);
     void updateStatus(StatusBar &status);
     void writeToScreen(StatusBar &status);
 

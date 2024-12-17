@@ -2,8 +2,13 @@
 #include <string>
 #include <cstring>
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <vector>
+#include <unistd.h>
+#include <limits.h>
+#include <string>
+#include <cstring>
 extern "C"
 {
 #include "ini.h"
@@ -35,7 +40,7 @@ public:
     void setColorIndex(int index);
     vector<string> getColors();
     static int loadFromFile(void *user, const char *section, const char *name, const char *value);
-    void getSettings();
-    void saveToFile();
+    void getSettings(string projectFile);
+    void saveToFile(string projectFile);
     void resetToDefaults();
 };

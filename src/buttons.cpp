@@ -170,7 +170,7 @@ Returns:
     {
         if (inc - (height / 2 - 9) == currentButton * 3)
         {
-            wattron(win, COLOR_PAIR(1));
+            wattron(win, COLOR_PAIR(14));
         }
         string text = button.getText();
         if (button.getToggle() != "")
@@ -178,7 +178,7 @@ Returns:
             text += " = " + button.getToggle();
         }
         mvwprintw(win, inc, 10, text.c_str(), "%s");
-        wattroff(win, COLOR_PAIR(1));
+        wattroff(win, COLOR_PAIR(14));
         inc += 3;
     }
 }
@@ -198,9 +198,9 @@ Returns:
 
 {
     werase(win);
-    wattron(win, COLOR_PAIR(2));
+    wattron(win, COLOR_PAIR(1));
     mvwprintw(win, 0, 10, "Current Directory:");
-    wattroff(win, COLOR_PAIR(2));
+    wattroff(win, COLOR_PAIR(1));
     mvwprintw(win, 1, 10, directory.c_str(), "%s");
     mvwprintw(win, 2, 10, "Press CTRL-T To Exit");
 
@@ -209,12 +209,12 @@ Returns:
     {
         if (inc - 4 == currentButton)
         {
-            wattron(win, COLOR_PAIR(1));
+            wattron(win, COLOR_PAIR(14));
         }
         string text = button.getText();
         int getSlashLoc = text.find_last_of("/");
         mvwprintw(win, inc, 10, text.substr(getSlashLoc, text.length() - getSlashLoc).c_str(), "%s");
-        wattroff(win, COLOR_PAIR(1));
+        wattroff(win, COLOR_PAIR(14));
         inc += 1;
     }
 }

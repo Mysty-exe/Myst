@@ -202,6 +202,18 @@ Returns:
 	}
 }
 
+HistoryStack Editor::getStack()
+/**
+Stack Getter Function
+
+Returns:
+	void
+ */
+
+{
+	return stack;
+}
+
 void Editor::setStack(HistoryStack s)
 /**
 Stack Setter Function
@@ -216,7 +228,6 @@ Returns:
 {
 	stack = s;
 	stack.addToStack(file.getLines(), lineX, lineY);
-	stack.truncateStack();
 }
 
 void Editor::setSettings(Settings &settings)
@@ -238,6 +249,11 @@ Returns:
 	autoComplete = settings.getProgrammingMode() == "On" ? true : false;
 	tabSpaces = setTab();
 	file.setTabSize(tabSpaces);
+}
+
+void Editor::setScanner(LexerScanner s)
+{
+	scanner = s;
 }
 
 bool Editor::checkSpecialChar(char character)
@@ -1690,9 +1706,9 @@ Returns:
 		{
 			if (x >= orderHighlight()[0].first && x <= orderHighlight()[1].first - 1)
 			{
-				wattron(textPad, COLOR_PAIR(1));
+				wattron(textPad, COLOR_PAIR(14));
 				mvwaddch(textPad, tempY, printX, copiedLine[x]);
-				wattroff(textPad, COLOR_PAIR(1));
+				wattroff(textPad, COLOR_PAIR(14));
 			}
 			else
 			{
@@ -1701,9 +1717,9 @@ Returns:
 		}
 		else if ((lineNum == orderHighlight()[0].second && x >= orderHighlight()[0].first) || (lineNum == orderHighlight()[1].second && x < orderHighlight()[1].first))
 		{
-			wattron(textPad, COLOR_PAIR(1));
+			wattron(textPad, COLOR_PAIR(14));
 			mvwaddch(textPad, tempY, printX, copiedLine[x]);
-			wattroff(textPad, COLOR_PAIR(1));
+			wattroff(textPad, COLOR_PAIR(14));
 		}
 		else
 		{
@@ -1715,6 +1731,85 @@ Returns:
 		{
 			printX = 0;
 			tempY++;
+		}
+	}
+	tempY++;
+}
+
+void Editor::printLineByLexeme(string copiedLine, int lineNum, int &tempY)
+/**
+prints line by character to check for lines being highlighted with a lexer
+
+Args:
+	(string) copiedLine: Line to print
+	(int) lineNum: Current line number
+	(int) &tempY: Current y position to print the line
+Returns:
+	void
+ */
+
+{
+	vector<pair<string, Token>> lexemes = scanner.getTokens(copiedLine);
+	int tempLineX = 0;
+	int printX = 0;
+
+	for (pair<string, Token> lexeme : lexemes)
+	{
+		enum Token color = lexeme.second;
+		for (int x = 0; x < (int)lexeme.first.length(); x++)
+		{
+			if (highlighting)
+			{
+				if (lineNum == orderHighlight()[0].second && lineNum == orderHighlight()[1].second)
+				{
+					if (tempLineX >= orderHighlight()[0].first && tempLineX <= orderHighlight()[1].first - 1)
+					{
+						wattron(textPad, COLOR_PAIR(color + 12));
+						mvwaddch(textPad, tempY, printX, lexeme.first[x]);
+						wattroff(textPad, COLOR_PAIR(color + 12));
+					}
+					else
+					{
+						wattron(textPad, COLOR_PAIR(color));
+						mvwaddch(textPad, tempY, printX, lexeme.first[x]);
+						wattroff(textPad, COLOR_PAIR(color));
+					}
+				}
+				else if ((lineNum == orderHighlight()[0].second && tempLineX >= orderHighlight()[0].first) || (lineNum == orderHighlight()[1].second && tempLineX < orderHighlight()[1].first))
+				{
+					wattron(textPad, COLOR_PAIR(color + 12));
+					mvwaddch(textPad, tempY, printX, lexeme.first[x]);
+					wattroff(textPad, COLOR_PAIR(color + 12));
+				}
+				else
+				{
+					if (lineNum > orderHighlight()[0].second && lineNum < orderHighlight()[1].second)
+					{
+						wattron(textPad, COLOR_PAIR(color + 12));
+					}
+					else
+					{
+						wattron(textPad, COLOR_PAIR(color));
+					}
+					mvwaddch(textPad, tempY, printX, lexeme.first[x]);
+					wattroff(textPad, COLOR_PAIR(color + 12));
+					wattroff(textPad, COLOR_PAIR(color));
+				}
+			}
+			else
+			{
+				wattron(textPad, COLOR_PAIR(color));
+				mvwaddch(textPad, tempY, printX, lexeme.first[x]);
+				wattroff(textPad, COLOR_PAIR(color));
+			}
+
+			tempLineX += 1;
+			printX += 1;
+			if (printX == width - 1)
+			{
+				printX = 0;
+				tempY++;
+			}
 		}
 	}
 	tempY++;
@@ -1748,18 +1843,76 @@ Returns:
 		}
 	}
 
-	if (index.size() > 0)
+	int printX = 0;
+	for (int x = 0; x < (int)copiedLine.length(); x++)
 	{
-		int printX = 0;
-		for (int x = 0; x < (int)copiedLine.length(); x++)
+		if (std::find(index.begin(), index.end(), x) != index.end())
 		{
-			if (std::find(index.begin(), index.end(), x) != index.end())
-			{
-				wattron(textPad, COLOR_PAIR(1));
-			}
-			mvwaddch(textPad, tempY, printX, copiedLine[x]);
-			wattroff(textPad, COLOR_PAIR(1));
+			wattron(textPad, COLOR_PAIR(14));
+		}
+		mvwaddch(textPad, tempY, printX, copiedLine[x]);
+		wattroff(textPad, COLOR_PAIR(14));
 
+		printX += 1;
+		if (printX == width - 1)
+		{
+			printX = 0;
+			tempY++;
+		}
+	}
+	tempY++;
+}
+
+void Editor::findPrintLineByLexeme(string copiedLine, string findTxt, int &tempY)
+/**
+prints line and highlights characters that are being found using ctrl-f with a lexer
+
+Args:
+	(string) copiedLine: Line to print
+	(string) findTxt: text to be highlighted
+	(int) &tempY: Current y position to print the line
+Returns:
+	void
+ */
+
+{
+	vector<int> index = {};
+	if (findTxt != "")
+	{
+		std::string::size_type pos = 0;
+		while ((pos = copiedLine.find(findTxt, pos)) != std::string::npos)
+		{
+			index.push_back(pos);
+			for (int i = 1; i < (int)findTxt.length(); i++)
+			{
+				index.push_back(pos + i);
+			}
+			pos += findTxt.length();
+		}
+	}
+
+	vector<pair<string, Token>> lexemes = scanner.getTokens(copiedLine);
+	int tempLineX = 0;
+	int printX = 0;
+
+	for (pair<string, Token> lexeme : lexemes)
+	{
+		enum Token color = lexeme.second;
+		for (int x = 0; x < (int)lexeme.first.length(); x++)
+		{
+			if (std::find(index.begin(), index.end(), tempLineX) != index.end())
+			{
+				wattron(textPad, COLOR_PAIR(color + 12));
+			}
+			else
+			{
+				wattron(textPad, COLOR_PAIR(color));
+			}
+			mvwaddch(textPad, tempY, printX, lexeme.first[x]);
+			wattroff(textPad, COLOR_PAIR(color + 12));
+			wattroff(textPad, COLOR_PAIR(color));
+
+			tempLineX += 1;
 			printX += 1;
 			if (printX == width - 1)
 			{
@@ -1767,12 +1920,9 @@ Returns:
 				tempY++;
 			}
 		}
-		tempY++;
 	}
-	else
-	{
-		printLine(copiedLine, tempY);
-	}
+
+	tempY++;
 }
 
 void Editor::updateStatus(StatusBar &status)
@@ -1852,6 +2002,16 @@ Returns:
  */
 
 {
+	bool useLexer = false;
+	scanner.setDocString(false);
+	if (getFile().getName().length() > 2)
+	{
+		if (getFile().getName().substr(getFile().getName().length() - 3, 3) == ".py")
+		{
+			useLexer = true;
+		}
+	}
+
 	int strSize = to_string(file.getLines().size()).length();
 	if ((lineNums && strSize >= 1 && lineNumbersWidth - 3 != strSize) || getWrappedCursorY(file.getLines().size() - 1, file.getLine(file.getLines().size() - 1).length()) + height >= maxHeight)
 	{
@@ -1886,9 +2046,9 @@ Returns:
 			nums += to_string(lineNum);
 			mvwprintw(linesPad, tempY, 0, nums.c_str(), "%s");
 
-			wattron(linesPad, COLOR_PAIR(2));
+			wattron(linesPad, COLOR_PAIR(1));
 			mvwprintw(linesPad, tempY, lineNumbersWidth - 2, "| ");
-			wattroff(linesPad, COLOR_PAIR(2));
+			wattroff(linesPad, COLOR_PAIR(1));
 		}
 		else
 		{
@@ -1899,9 +2059,9 @@ Returns:
 			nums += "~";
 			mvwprintw(linesPad, tempY, 0, nums.c_str(), "%s");
 
-			wattron(linesPad, COLOR_PAIR(2));
+			wattron(linesPad, COLOR_PAIR(1));
 			mvwprintw(linesPad, tempY, lineNumbersWidth - 2, "| ");
-			wattroff(linesPad, COLOR_PAIR(2));
+			wattroff(linesPad, COLOR_PAIR(1));
 		}
 
 		string copiedLine = file.replaceAll(line, "\t", tabSpaces); // Replaces the tabspaces
@@ -1912,31 +2072,55 @@ Returns:
 			{
 				if (lineNum - 1 > orderHighlight()[0].second && lineNum - 1 < orderHighlight()[1].second)
 				{
-					wattron(textPad, COLOR_PAIR(1));
+					wattron(textPad, COLOR_PAIR(14));
 					if (copiedLine.length() == 0)
 					{
 						mvwprintw(textPad, tempY, 0, " ");
 					}
-					printLine(copiedLine, tempY);
-					wattroff(textPad, COLOR_PAIR(1));
-				}
-				else if (lineNum - 1 == orderHighlight()[0].second || lineNum - 1 == orderHighlight()[1].second)
-				{
-					printLineByChar(copiedLine, lineNum - 1, tempY);
+					if (useLexer)
+					{
+						printLineByLexeme(copiedLine, lineNum - 1, tempY);
+					}
+					else
+					{
+						printLine(copiedLine, tempY);
+					}
+					wattroff(textPad, COLOR_PAIR(14));
 				}
 				else
 				{
-					printLine(copiedLine, tempY);
+					if (useLexer)
+					{
+						printLineByLexeme(copiedLine, lineNum - 1, tempY);
+					}
+					else
+					{
+						printLineByChar(copiedLine, lineNum - 1, tempY);
+					}
 				}
 			}
 			else
 			{
-				printLine(copiedLine, tempY);
+				if (useLexer)
+				{
+					printLineByLexeme(copiedLine, lineNum - 1, tempY);
+				}
+				else
+				{
+					printLineByChar(copiedLine, lineNum - 1, tempY);
+				}
 			}
 		}
 		else
 		{
-			findPrintLineByChar(copiedLine, status.getFindTxt(), tempY);
+			if (useLexer)
+			{
+				findPrintLineByLexeme(copiedLine, status.getFindTxt(), tempY);
+			}
+			else
+			{
+				findPrintLineByChar(copiedLine, status.getFindTxt(), tempY);
+			}
 		}
 	}
 
@@ -1953,9 +2137,9 @@ Returns:
 	{
 		mvwprintw(linesPad, n, 0, nums.c_str(), "%s");
 
-		wattron(linesPad, COLOR_PAIR(2));
+		wattron(linesPad, COLOR_PAIR(1));
 		mvwprintw(linesPad, n, lineNumbersWidth - 2, "| ");
-		wattroff(linesPad, COLOR_PAIR(2));
+		wattroff(linesPad, COLOR_PAIR(1));
 	}
 
 	prefresh(linesPad, scroll, 0, 0, 0, height - 2, lineNumbersWidth);

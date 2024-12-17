@@ -536,15 +536,15 @@ Returns:
         displayDate();
         if (error)
         {
-            wattron(statusWindow, COLOR_PAIR(4));
+            wattron(statusWindow, COLOR_PAIR(12));
         }
         else
         {
-            wattron(statusWindow, COLOR_PAIR(2));
+            wattron(statusWindow, COLOR_PAIR(1));
         }
         mvwprintw(statusWindow, 0, 0, line.c_str(), "%s");
-        wattroff(statusWindow, COLOR_PAIR(2));
-        wattroff(statusWindow, COLOR_PAIR(4));
+        wattroff(statusWindow, COLOR_PAIR(1));
+        wattroff(statusWindow, COLOR_PAIR(12));
         wrefresh(statusWindow);
     }
 }
@@ -560,23 +560,23 @@ Returns:
 {
     clear();
 
-    wattron(statusWindow, COLOR_PAIR(2));
+    wattron(statusWindow, COLOR_PAIR(1));
     wprintw(statusWindow, "Find: ");
 
-    wattroff(statusWindow, COLOR_PAIR(2));
+    wattroff(statusWindow, COLOR_PAIR(1));
     wprintw(statusWindow, findTxt.c_str(), "%s");
     wprintw(statusWindow, "   ");
 
-    wattron(statusWindow, COLOR_PAIR(2));
+    wattron(statusWindow, COLOR_PAIR(1));
     wprintw(statusWindow, "Replace: ");
 
-    wattroff(statusWindow, COLOR_PAIR(2));
+    wattroff(statusWindow, COLOR_PAIR(1));
     wprintw(statusWindow, replaceTxt.c_str(), "%s");
 
-    wattron(statusWindow, COLOR_PAIR(2));
+    wattron(statusWindow, COLOR_PAIR(1));
     mvwprintw(statusWindow, 0, width - (9 + to_string(matches).length()), "Matches: ");
 
-    wattroff(statusWindow, COLOR_PAIR(2));
+    wattroff(statusWindow, COLOR_PAIR(1));
     mvwprintw(statusWindow, 0, width - to_string(matches).length(), to_string(matches).c_str(), "%s");
 
     if (state == "find")
@@ -619,9 +619,9 @@ Returns:
 {
     clear();
 
-    wattron(statusWindow, COLOR_PAIR(2));
+    wattron(statusWindow, COLOR_PAIR(1));
     wprintw(statusWindow, "File Name: ");
-    wattroff(statusWindow, COLOR_PAIR(2));
+    wattroff(statusWindow, COLOR_PAIR(1));
     mvwprintw(statusWindow, 0, 11, filenameTxt.c_str(), "%s");
 
     wmove(statusWindow, 0, cursorX + 11);
@@ -639,18 +639,18 @@ Returns:
 {
     clear();
 
-    wattron(statusWindow, COLOR_PAIR(2));
+    wattron(statusWindow, COLOR_PAIR(1));
     if (state == "quit")
     {
         wprintw(statusWindow, "Quit Without Saving? (y/n): ");
-        wattroff(statusWindow, COLOR_PAIR(2));
+        wattroff(statusWindow, COLOR_PAIR(1));
         mvwprintw(statusWindow, 0, 28, confirmTxt.c_str(), "%s");
         wmove(statusWindow, 0, cursorX + 28);
     }
     else if (state == "save")
     {
         wprintw(statusWindow, "Overwrite File? (y/n): ");
-        wattroff(statusWindow, COLOR_PAIR(2));
+        wattroff(statusWindow, COLOR_PAIR(1));
         mvwprintw(statusWindow, 0, 23, confirmTxt.c_str(), "%s");
         wmove(statusWindow, 0, cursorX + 23);
     }

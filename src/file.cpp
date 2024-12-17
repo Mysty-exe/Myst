@@ -164,7 +164,13 @@ Returns:
  */
 
 {
+    error_code ec;
     fstream writeFile(absoluteFile, ios::out | ios::trunc);
+    if (filesystem::is_directory(absoluteFile, ec))
+    {
+        fstream writeFile(absoluteFile + "/" + fileName, ios::out | ios::trunc);
+    }
+
     if (writeFile.fail())
     {
         return false;
@@ -181,7 +187,6 @@ Returns:
         counter += 1;
     }
     writeFile.close();
-
     return true;
 }
 
@@ -243,10 +248,20 @@ Returns:
     }
     else
     {
+        error_code ec;
         absoluteFile = filesystem::absolute(fileName);
-        if (fileName.find('/') != string::npos)
+        if (!filesystem::is_regular_file(absoluteFile, ec) && !filesystem::is_directory(absoluteFile, ec))
+        {
+            absoluteFile = filesystem::path(absoluteFile).parent_path();
+        }
+
+        if (fileName.find('/') != string::npos && !filesystem::is_directory(fileName, ec))
         {
             fileName = fileName.substr(fileName.find_last_of("/") + 1, fileName.length() - fileName.find_last_of("/"));
+        }
+        else if (filesystem::is_directory(fileName, ec))
+        {
+            fileName = "";
         }
     }
 
