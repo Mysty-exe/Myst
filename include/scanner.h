@@ -5,6 +5,13 @@
 
 using namespace std;
 
+enum Language
+{
+    PYTHON = 1,
+    CPP = 2,
+    C = 3
+};
+
 enum Token
 /**
  * Enum that represents a token
@@ -40,10 +47,13 @@ private:
     vector<string> keyWords;
     vector<string> specialChars;
     vector<string> functions;
+    Language currentLang;
     bool docString;
 
 public:
     LexerScanner();
+    void setLexers();
+    void setLanguage(Language language);
     bool isNum(string txt);
     void setDocString(bool doc);
     vector<string> getLexemes(string code);

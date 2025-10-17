@@ -31,7 +31,7 @@ public:
     void getFilesInDirectory();
 
     void open(string n);
-    bool save();
+    int save();
 
     void setTabSize(string tab);
     vector<string> getFiles();

@@ -1052,14 +1052,19 @@ Returns:
 	copiedLines = 0;
 	pastedLines = 0;
 
-	if (file.save())
+	int canSave = file.save();
+	switch (canSave)
 	{
+	case 1:
 		status.setInfo("Changes Saved.", false);
 		lastSaved = status.getDateString();
-	}
-	else
-	{
+		break;
+	case 0:
+		state = "ctrlshifts";
+		break;
+	case -1:
 		status.setInfo("Couldn't Save Changes.", true);
+		break;
 	}
 }
 
@@ -1940,7 +1945,7 @@ Returns:
  */
 
 {
-	if (state == "ctrls")
+	if (state == "ctrls" || state == "ctrlshifts")
 	{
 		return;
 	}
@@ -1994,6 +1999,18 @@ Returns:
 	}
 }
 
+string Editor::getState()
+/**
+Gets current state of the editor
+
+Returns:
+	string
+ */
+
+{
+	return state;
+}
+
 void Editor::writeToScreen(StatusBar &status)
 /**
 Clears the screen and writes each line based on the File object and refreshes the screen at the end
@@ -2012,6 +2029,7 @@ Returns:
 	{
 		if (getFile().getName().substr(getFile().getName().length() - 3, 3) == ".py")
 		{
+			scanner.setLanguage(PYTHON);
 			useLexer = true;
 		}
 	}

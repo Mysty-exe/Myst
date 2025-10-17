@@ -499,34 +499,41 @@ Returns:
     }
     else if (currentMenu == 1)
     {
-        int num = switchList.enter();
-        error_code ec;
-        const filesystem::path path(switchList.getButtons()[num].getText());
-        if (filesystem::is_directory(path, ec))
+        try
         {
-            switchList.setCurrentButton(0);
-            scroll = 0;
-            currentDirectory = switchList.getButtons()[num].getText();
-            try
+            int num = switchList.enter();
+            error_code ec;
+            const filesystem::path path(switchList.getButtons()[num].getText());
+            if (filesystem::is_directory(path, ec))
             {
-                setFileButtons(path);
+                switchList.setCurrentButton(0);
+                scroll = 0;
+                currentDirectory = switchList.getButtons()[num].getText();
+                try
+                {
+                    setFileButtons(path);
+                }
+                catch (const std::exception &e)
+                {
+                    currentDirectory = currentDirectory.substr(0, currentDirectory.find_last_of("/"));
+                }
             }
-            catch (const std::exception &e)
+            else if (filesystem::is_regular_file(path, ec))
             {
-                currentDirectory = currentDirectory.substr(0, currentDirectory.find_last_of("/"));
+                if (File::overwrite(path))
+                {
+                    file.open(path);
+                }
+                return 1;
             }
+            return 0;
         }
-        else if (filesystem::is_regular_file(path, ec))
+        catch (exception)
         {
-            if (File::overwrite(path))
-            {
-                file.open(path);
-            }
             return 1;
         }
-
-        return 0;
     }
+
     return preferencesList.enter();
 }
 

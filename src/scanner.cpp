@@ -2,22 +2,36 @@
 
 LexerScanner::LexerScanner()
 {
-    punctuation = {","};
-    delimiters = {"(", ")", "[", "]", "{", "}", ":", ";"};
-    singleOperators = {"=", ">", "<", "+", "-", "*", "/", "%"};
-    doubleOperators = {"==", "<=", ">=", "+=", "-=", "*=", "/=", "!="};
-    specialChars = {R"(\n)", R"(\t)", R"(\r)", R"(\e)", R"(\a)", R"(\f)", R"(\v)", R"(\b)", R"(\')", R"(\")", R"(\\)"};
-    keyWords = {"and", "as", "assert", "break", "class", "continue", "def", "del", "elif", "else", "except", "False", "True", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "None", "nonlocal", "not", "or", "pass", "raise", "try", "while", "with", "return", "yield"};
-    functions = {"abs", "all", "any", "ascii", "bin", "bool", "breakpoint", "bytearray",
-                 "bytes", "callable", "chr", "classmethod", "compile", "complex", "delattr",
-                 "dict", "dir", "divmod", "enumerate", "eval", "exec", "filter", "float",
-                 "format", "frozenset", "getattr", "globals", "hasattr", "hash", "help",
-                 "hex", "id", "input", "int", "isinstance", "issubclass", "iter", "len",
-                 "list", "locals", "map", "max", "memoryview", "min", "next", "object",
-                 "oct", "open", "ord", "pow", "print", "property", "range", "repr", "reversed",
-                 "round", "set", "setattr", "slice", "sorted", "staticmethod", "str", "sum",
-                 "super", "tuple", "type", "vars", "zip", "__import__"};
+    setLexers();
     docString = false;
+}
+
+void LexerScanner::setLexers()
+{
+    if (currentLang == PYTHON)
+    {
+        punctuation = {","};
+        delimiters = {"(", ")", "[", "]", "{", "}", ":", ";"};
+        singleOperators = {"=", ">", "<", "+", "-", "*", "/", "%", "**", "|", "@"};
+        doubleOperators = {"==", "<=", ">=", "+=", "-=", "*=", "/=", "!=", "//=", "**=", "<<", ">>", "<<=", ">>=", "|=", "&=", "^=", ":="};
+        specialChars = {R"(\n)", R"(\t)", R"(\r)", R"(\e)", R"(\a)", R"(\f)", R"(\v)", R"(\b)", R"(\')", R"(\")", R"(\\)"};
+        keyWords = {"and", "as", "assert", "break", "class", "continue", "def", "del", "elif", "else", "except", "False", "True", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "None", "nonlocal", "not", "or", "pass", "raise", "try", "while", "with", "return", "yield"};
+        functions = {"abs", "all", "any", "ascii", "bin", "bool", "breakpoint", "bytearray",
+                     "bytes", "callable", "chr", "classmethod", "compile", "complex", "delattr",
+                     "dict", "dir", "divmod", "enumerate", "eval", "exec", "filter", "float",
+                     "format", "frozenset", "getattr", "globals", "hasattr", "hash", "help",
+                     "hex", "id", "input", "int", "isinstance", "issubclass", "iter", "len",
+                     "list", "locals", "map", "max", "memoryview", "min", "next", "object",
+                     "oct", "open", "ord", "pow", "print", "property", "range", "repr", "reversed",
+                     "round", "set", "setattr", "slice", "sorted", "staticmethod", "str", "sum",
+                     "super", "tuple", "type", "vars", "zip", "__import__"};
+    }
+}
+
+void LexerScanner::setLanguage(Language language)
+{
+    currentLang = language;
+    setLexers();
 }
 
 bool LexerScanner::isNum(string txt)

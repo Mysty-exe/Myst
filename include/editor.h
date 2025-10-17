@@ -66,6 +66,7 @@ public:
     void setScanner(LexerScanner scanner);
     bool checkSpecialChar(char character);
     bool checkOtherChar(char character);
+    string getState();
 
     int getCursorX();
     int getCursorY();

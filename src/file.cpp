@@ -31,7 +31,18 @@ Returns:
 {
     string text;
     int lineNum = 0;
-    fstream readFile(absoluteFile);
+
+    fstream readFile;
+    error_code ec;
+    if (filesystem::is_directory(absoluteFile, ec))
+    {
+        readFile = fstream(absoluteFile + "/" + fileName);
+    }
+    else
+    {
+        readFile = fstream(absoluteFile);
+    }
+
     if (readFile.fail())
     {
         return true;
@@ -155,7 +166,7 @@ Returns:
     readFile.close();
 }
 
-bool File::save()
+int File::save()
 /**
 Saves the file
 
@@ -165,15 +176,23 @@ Returns:
 
 {
     error_code ec;
-    fstream writeFile(absoluteFile, ios::out | ios::trunc);
+    fstream writeFile;
     if (filesystem::is_directory(absoluteFile, ec))
     {
-        fstream writeFile(absoluteFile + "/" + fileName, ios::out | ios::trunc);
+        writeFile = fstream(absoluteFile + "/" + fileName, ios::out | ios::trunc);
+    }
+    else
+    {
+        writeFile = fstream(absoluteFile, ios::out | ios::trunc);
     }
 
     if (writeFile.fail())
     {
-        return false;
+        if (fileName.empty())
+        {
+            return 0;
+        }
+        return -1;
     }
 
     int counter = 0;
@@ -187,7 +206,7 @@ Returns:
         counter += 1;
     }
     writeFile.close();
-    return true;
+    return 1;
 }
 
 void File::setTabSize(string tab)

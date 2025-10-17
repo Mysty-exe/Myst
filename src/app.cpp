@@ -660,6 +660,7 @@ Returns:
                 {
                     File file = editor.getFile();
                     file.setName(status.getFilename());
+                    file.save();
                     editor.setFile(file);
                     editor.ctrlS(status);
                     file.getFilesInDirectory();
@@ -1047,9 +1048,20 @@ Returns:
 
     if (MODE == 1)
     {
-        editor.updateStatus(status);
-        status.update();
-        editor.writeToScreen(status);
+        if (editor.getState() == "ctrlshifts")
+        {
+            clear();
+            status.setState("save as");
+            editor.writeToScreen(status);
+            MODE = 6;
+            return;
+        }
+        else
+        {
+            editor.updateStatus(status);
+            status.update();
+            editor.writeToScreen(status);
+        }
     }
     else
     {

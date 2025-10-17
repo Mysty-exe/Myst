@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <limits.h>
 #include <string>
-#include <cstring>
 extern "C"
 {
 #include "ini.h"

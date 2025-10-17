@@ -14,7 +14,7 @@ std::string getProjectPathFromEnv()
     {
         return std::string(path);
     }
-    return "";
+    return filesystem::current_path();
 }
 
 int main(int argc, char **argv)
@@ -23,7 +23,6 @@ int main(int argc, char **argv)
     if (projectPath.empty())
     {
         std::cout << "Project path is not set in the environment variable." << std::endl;
-        return 1;
     }
 
     cout << "\033]0;Myst Editor\007";
